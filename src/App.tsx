@@ -4,6 +4,8 @@ import { LanguageProvider } from './i18n/language-context';
 import './i18n/i18n';
 import { AppRoutes } from './routes/app-routes';
 
+import ErrorBoundary from './components/ErrorBoundary';
+
 const queryClient = new QueryClient();
 
 export default function App() {
@@ -11,7 +13,9 @@ export default function App() {
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
         <LanguageProvider defaultLanguage="en-US" defaultModules={['common', 'auth']}>
-          <AppRoutes />
+          <ErrorBoundary>
+            <AppRoutes />
+          </ErrorBoundary>
         </LanguageProvider>
       </QueryClientProvider>
     </BrowserRouter>
