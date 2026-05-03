@@ -614,7 +614,7 @@ export default function VibeBuilderEditor() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex flex-col p-6 space-y-4">
+      <div className="w-full min-h-screen bg-gray-950 flex flex-col p-6 space-y-4">
         {/* Top bar skeleton */}
         <div className="h-14 bg-gray-900 rounded animate-pulse" />
         <div className="flex flex-1 gap-4">
@@ -635,7 +635,7 @@ export default function VibeBuilderEditor() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center p-6 text-center">
+      <div className="w-full min-h-screen bg-gray-950 flex flex-col items-center justify-center p-6 text-center">
         <h2 className="text-2xl font-bold text-white mb-2">Something went wrong</h2>
         <p className="text-red-400 mb-6">{error}</p>
         <button onClick={() => window.location.reload()} className="px-6 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg">
@@ -647,14 +647,14 @@ export default function VibeBuilderEditor() {
 
   if (!page) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+      <div className="w-full min-h-screen bg-gray-950 flex items-center justify-center">
         <p className="text-gray-400">Page not found</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col" style={{ fontFamily: 'Inter, sans-serif' }}>
+    <div className="w-full min-h-screen bg-gray-950 flex flex-col" style={{ fontFamily: 'Inter, sans-serif' }}>
       {/* Top Bar */}
       <div className="h-14 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-4 gap-4 shrink-0 z-20">
         <div className="flex items-center gap-3">

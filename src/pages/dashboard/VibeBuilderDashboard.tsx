@@ -176,7 +176,7 @@ export default function VibeBuilderDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+      <div className="w-full min-h-screen bg-gray-950 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-10 h-10 border-4 border-violet-500 border-t-transparent rounded-full animate-spin" />
           <p className="text-gray-400 text-sm">Loading site...</p>
@@ -187,7 +187,7 @@ export default function VibeBuilderDashboard() {
 
   if (error && !site) {
     return (
-      <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center p-6 text-center">
+      <div className="w-full min-h-screen bg-gray-950 flex flex-col items-center justify-center p-6 text-center">
         <h2 className="text-2xl font-bold text-white mb-2">Something went wrong</h2>
         <p className="text-red-400 mb-6">{error}</p>
         <button onClick={loadSite} className="px-6 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg">
@@ -198,7 +198,7 @@ export default function VibeBuilderDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="w-full min-h-screen bg-gray-950 text-white">
       {/* Header */}
       <header className="border-b border-gray-800 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
