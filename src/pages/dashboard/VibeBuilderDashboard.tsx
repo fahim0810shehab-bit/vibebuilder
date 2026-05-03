@@ -1,0 +1,250 @@
+import { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '@/state/store/auth';
+import { contentService } from '@/services/contentService';
+import { SiteData, VibePage } from '@/types/vibe';
+import { v4 as uuidv4 } from 'uuid';
+
+function makeDefaultPage(name: string, path: string): VibePage {
+  return {
+    id: uuidv4(),
+    name,
+    path,
+    rootNode: {
+      id: uuidv4(),
+      type: 'section',
+      props: { padding: '40px 20px', backgroundColor: '#ffffff' },
+      children: [
+        {
+          id: uuidv4(),
+          type: 'text',
+          content: `Welcome to ${name}!`,
+          props: { fontSize: '2rem', fontWeight: '700', color: '#111827', textAlign: 'center' },
+          children: [],
+        },
+      ],
+    },
+  };
+}
+
+export default function VibeBuilderDashboard() {
+  const navigate = useNavigate();
+  const { user, accessToken } = useAuthStore();
+  const [site, setSite] = useState<SiteData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [newPageName, setNewPageName] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  const userId = user?.itemId ?? user?.email ?? '';
+  const username = user?.userName ?? user?.email?.split('@')[0] ?? 'user';
+
+  const loadSite = useCallback(async () => {
+    if (!userId) return;
+    setLoading(true);
+    try {
+      let data = await contentService.getByUserId(userId);
+      if (!data) {
+        // Create default site
+        data = await contentService.create({
+          user_id: userId,
+          username,
+          is_published: false,
+          pages: [makeDefaultPage('Home', 'home')],
+        });
+      }
+      setSite(data);
+    } catch (e) {
+      setError('Failed to load site data.');
+    } finally {
+      setLoading(false);
+    }
+  }, [userId, username]);
+
+  useEffect(() => {
+    loadSite();
+  }, [loadSite]);
+
+  // Also store token in localStorage for services that need it
+  useEffect(() => {
+    if (accessToken) localStorage.setItem('access_token', accessToken);
+  }, [accessToken]);
+
+  const saveSite = async (updated: SiteData) => {
+    if (!updated.id) return;
+    setSaving(true);
+    try {
+      await contentService.update(updated.id, {
+        is_published: updated.is_published,
+        pages: updated.pages,
+      });
+      setSite(updated);
+    } catch {
+      setError('Failed to save. Changes saved locally.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const togglePublish = async () => {
+    if (!site) return;
+    const updated = { ...site, is_published: !site.is_published };
+    await saveSite(updated);
+  };
+
+  const addPage = async () => {
+    if (!site || !newPageName.trim()) return;
+    const slug = newPageName.trim().toLowerCase().replace(/\s+/g, '-');
+    const newPage = makeDefaultPage(newPageName.trim(), slug);
+    const updated = { ...site, pages: [...site.pages, newPage] };
+    setNewPageName('');
+    await saveSite(updated);
+  };
+
+  const deletePage = async (pageId: string) => {
+    if (!site) return;
+    if (site.pages.length <= 1) {
+      setError('Cannot delete the last page.');
+      return;
+    }
+    const updated = { ...site, pages: site.pages.filter((p) => p.id !== pageId) };
+    await saveSite(updated);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-4 border-violet-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-gray-400 text-sm">Loading your site...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-950 text-white">
+      {/* Header */}
+      <header className="border-b border-gray-800 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+              <span className="text-white font-bold text-xs">VB</span>
+            </div>
+            <h1 className="text-xl font-bold tracking-tight">VibeBuilder</h1>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-400">
+              {user?.firstName ?? username}
+            </span>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-5xl mx-auto px-6 py-10 space-y-8">
+        {error && (
+          <div className="bg-red-900/30 border border-red-700 text-red-300 rounded-lg px-4 py-3 text-sm flex items-center justify-between">
+            <span>{error}</span>
+            <button onClick={() => setError(null)} className="text-red-400 hover:text-white ml-4">✕</button>
+          </div>
+        )}
+
+        {/* Site Info Card */}
+        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-4">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Your Site</p>
+              <h2 className="text-2xl font-bold text-white">@{site?.username}</h2>
+              <a
+                href={`/site/${site?.username}/home`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-violet-400 hover:text-violet-300 text-sm transition-colors mt-1 inline-block"
+              >
+                /site/{site?.username}/home ↗
+              </a>
+            </div>
+            <div className="flex items-center gap-3">
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                  site?.is_published
+                    ? 'bg-green-900/50 text-green-400 border border-green-700'
+                    : 'bg-gray-800 text-gray-400 border border-gray-700'
+                }`}
+              >
+                {site?.is_published ? '● Live' : '○ Draft'}
+              </span>
+              <button
+                onClick={togglePublish}
+                disabled={saving}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-50 ${
+                  site?.is_published
+                    ? 'bg-gray-700 hover:bg-gray-600 text-white'
+                    : 'bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white shadow-lg shadow-violet-900/30'
+                }`}
+              >
+                {saving ? 'Saving...' : site?.is_published ? 'Unpublish' : 'Publish Site'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Pages */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-white">Pages</h3>
+            <span className="text-sm text-gray-500">{site?.pages.length ?? 0} page(s)</span>
+          </div>
+
+          <div className="space-y-3">
+            {site?.pages.map((page) => (
+              <div
+                key={page.id}
+                className="group bg-gray-900 border border-gray-800 hover:border-gray-700 rounded-xl px-5 py-4 flex items-center justify-between transition-all"
+              >
+                <div>
+                  <p className="font-medium text-white">{page.name}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">/{page.path}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => navigate(`/editor?pageId=${page.id}`)}
+                    className="px-4 py-1.5 bg-violet-600/20 hover:bg-violet-600/40 border border-violet-700/50 text-violet-300 hover:text-white rounded-lg text-sm transition-all"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => deletePage(page.id)}
+                    disabled={site.pages.length <= 1}
+                    className="px-3 py-1.5 bg-red-900/20 hover:bg-red-900/40 border border-red-800/50 text-red-400 hover:text-red-300 rounded-lg text-sm transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Add Page */}
+          <div className="flex gap-3 mt-4">
+            <input
+              type="text"
+              value={newPageName}
+              onChange={(e) => setNewPageName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && addPage()}
+              placeholder="New page name…"
+              className="flex-1 bg-gray-900 border border-gray-700 focus:border-violet-500 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 outline-none transition-colors"
+            />
+            <button
+              onClick={addPage}
+              disabled={!newPageName.trim() || saving}
+              className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white rounded-lg text-sm font-medium transition-all"
+            >
+              Add Page
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
