@@ -25,7 +25,15 @@ export const AppRoutes = () => {
           <Routes>
             {AuthRoutes}
 
-            {/* Full-viewport Editor — NO sidebar, NO top header */}
+            {/* Full-viewport VibeBuilder pages — NO sidebar, NO global header */}
+            <Route
+              path="/vibebuilder"
+              element={
+                <Guard>
+                  <VibeBuilderDashboard />
+                </Guard>
+              }
+            />
             <Route
               path="/editor"
               element={
@@ -35,7 +43,7 @@ export const AppRoutes = () => {
               }
             />
 
-            {/* Standard layout routes */}
+            {/* Standard Selise Construct layout routes */}
             <Route
               element={
                 <Guard>
@@ -43,7 +51,6 @@ export const AppRoutes = () => {
                 </Guard>
               }
             >
-              <Route path="/vibebuilder" element={<VibeBuilderDashboard />} />
               <Route path="/404" element={<NotFoundPage />} />
             </Route>
 
@@ -52,7 +59,6 @@ export const AppRoutes = () => {
 
             {/* Redirects */}
             <Route path="/" element={<Navigate to="/vibebuilder" />} />
-
             <Route path="*" element={<Navigate to="/404" />} />
           </Routes>
         </SidebarProvider>

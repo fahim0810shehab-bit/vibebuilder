@@ -5,6 +5,7 @@ import { contentService } from '@/services/contentService';
 import { SiteData, VibePage } from '@/types/vibe';
 import { v4 as uuidv4 } from 'uuid';
 import { decodeJWT } from '@/lib/utils/decode-jwt-utils';
+import { ThemeSwitcher, LanguageSelector, ProfileMenu } from '@/components/core';
 
 function makeDefaultPage(name: string, path: string): VibePage {
   return {
@@ -215,25 +216,43 @@ export default function VibeBuilderDashboard() {
   }
 
   return (
-    <div className="w-full min-h-screen bg-gray-950 text-white">
-      {/* Header */}
-      <header className="border-b border-gray-800 bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
-              <span className="text-white font-bold text-xs">VB</span>
-            </div>
-            <h1 className="text-xl font-bold tracking-tight">VibeBuilder</h1>
+    <div className="w-full min-h-screen bg-gray-950 text-white" style={{ fontFamily: 'Inter, sans-serif' }}>
+      {/* ── Premium Topbar ── */}
+      <header className="h-14 border-b border-gray-800 bg-gray-900/90 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between px-6">
+        {/* Left: Brand */}
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-900/40">
+            <span className="text-white font-bold text-xs">VB</span>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-400">
-              {user?.firstName ?? username}
-            </span>
-          </div>
+          <span className="text-white font-bold text-base tracking-tight">VibeBuilder</span>
+          <span className="hidden sm:block text-gray-600 text-xs ml-1">/ Dashboard</span>
+        </div>
+
+        {/* Right: Controls */}
+        <div className="flex items-center gap-1">
+          <ThemeSwitcher />
+          <LanguageSelector />
+          <div className="w-px h-5 bg-gray-700 mx-1" />
+          <ProfileMenu />
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-10 space-y-8">
+      {/* Gradient background glow */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-violet-600/10 rounded-full blur-3xl" />
+      </div>
+
+      <main className="relative z-10 max-w-5xl mx-auto px-6 py-10 space-y-8">
+        {/* Welcome hero strip */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-extrabold text-white tracking-tight">
+              Welcome back, <span className="text-violet-400">{user?.firstName ?? username}</span> 👋
+            </h1>
+            <p className="text-gray-500 text-sm mt-1">Manage your website, pages and publishing settings.</p>
+          </div>
+        </div>
+
         {error && (
           <div className="bg-red-900/30 border border-red-700 text-red-300 rounded-lg px-4 py-3 text-sm flex items-center justify-between">
             <span>{error}</span>
