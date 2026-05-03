@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/state/store/auth';
 import { contentService } from '@/services/contentService';
 import { SiteData, VibePage } from '@/types/vibe';
@@ -29,7 +28,6 @@ function makeDefaultPage(name: string, path: string): VibePage {
 }
 
 export default function VibeBuilderDashboard() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, accessToken } = useAuthStore();
   const [site, setSite] = useState<SiteData | null>(null);
@@ -61,7 +59,7 @@ export default function VibeBuilderDashboard() {
       }
       setSite(data);
     } catch (e) {
-      setError(t('DASHBOARD_ERR_LOAD_FAILED'));
+      setError('Load Failed');
     } finally {
       setLoading(false);
     }
@@ -87,7 +85,7 @@ export default function VibeBuilderDashboard() {
       setSite(updated);
       setLastSaved(new Date());
     } catch {
-      setError(t('DASHBOARD_ERR_SAVE_FAILED'));
+      setError('Save Failed');
     } finally {
       setSaving(false);
     }
@@ -111,7 +109,7 @@ export default function VibeBuilderDashboard() {
   const deletePage = async (pageId: string) => {
     if (!site) return;
     if (site.pages.length <= 1) {
-      setError(t('DASHBOARD_ERR_DELETE_LAST_PAGE'));
+      setError('Cannot delete the only page');
       return;
     }
     const updated = { ...site, pages: site.pages.filter((p) => p.id !== pageId) };
@@ -165,7 +163,7 @@ export default function VibeBuilderDashboard() {
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-10 h-10 border-4 border-violet-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-gray-400 text-sm">{t('DASHBOARD_LOADING_SITE')}</p>
+          <p className="text-gray-400 text-sm">Loading site...</p>
         </div>
       </div>
     );
@@ -202,7 +200,7 @@ export default function VibeBuilderDashboard() {
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">{t('DASHBOARD_SITE_INFO_LABEL')}</p>
+              <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Site Information</p>
               <h2 className="text-2xl font-bold text-white">@{site?.username}</h2>
               <div className="flex items-center gap-2 mt-1">
                 <a
@@ -227,7 +225,7 @@ export default function VibeBuilderDashboard() {
                     : 'bg-gray-800 text-gray-400 border border-gray-700'
                 }`}
               >
-                {site?.is_published ? `● ${t('DASHBOARD_STATUS_LIVE')}` : `○ ${t('DASHBOARD_STATUS_DRAFT')}`}
+                {site?.is_published ? '● Live' : '○ Draft'}
               </span>
               <button
                 onClick={togglePublish}
@@ -238,7 +236,7 @@ export default function VibeBuilderDashboard() {
                     : 'bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white shadow-lg shadow-violet-900/30'
                 }`}
               >
-                {saving ? t('DASHBOARD_SAVING') : site?.is_published ? t('DASHBOARD_UNPUBLISH') : t('DASHBOARD_PUBLISH')}
+                {saving ? 'Saving...' : site?.is_published ? 'Unpublish' : 'Publish'}
               </button>
             </div>
           </div>
@@ -263,8 +261,8 @@ export default function VibeBuilderDashboard() {
         {/* Pages */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">{t('DASHBOARD_PAGES_HEADING')}</h3>
-            <span className="text-sm text-gray-500">{t('DASHBOARD_PAGE_COUNT', { count: site?.pages.length ?? 0 })}</span>
+            <h3 className="text-lg font-semibold text-white">Your Pages</h3>
+            <span className="text-sm text-gray-500">{site?.pages.length ?? 0} pages</span>
           </div>
 
           <div className="space-y-3">
@@ -312,14 +310,14 @@ export default function VibeBuilderDashboard() {
                     onClick={() => navigate(`/editor?pageId=${page.id}`)}
                     className="px-4 py-1.5 bg-violet-600/20 hover:bg-violet-600/40 border border-violet-700/50 text-violet-300 hover:text-white rounded-lg text-sm transition-all"
                   >
-                    {t('DASHBOARD_EDIT')}
+                    Edit
                   </button>
                   <button
                     onClick={() => deletePage(page.id)}
                     disabled={site.pages.length <= 1}
                     className="px-3 py-1.5 bg-red-900/20 hover:bg-red-900/40 border border-red-800/50 text-red-400 hover:text-red-300 rounded-lg text-sm transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                   >
-                    {t('DASHBOARD_DELETE')}
+                    Delete
                   </button>
                 </div>
               </div>
@@ -333,7 +331,7 @@ export default function VibeBuilderDashboard() {
               value={newPageName}
               onChange={(e) => setNewPageName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && addPage()}
-              placeholder={t('DASHBOARD_INPUT_NEW_PAGE_PLACEHOLDER')}
+              placeholder="Enter page name..."
               className="flex-1 bg-gray-900 border border-gray-700 focus:border-violet-500 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 outline-none transition-colors"
             />
             <button
@@ -341,7 +339,7 @@ export default function VibeBuilderDashboard() {
               disabled={!newPageName.trim() || saving}
               className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white rounded-lg text-sm font-medium transition-all"
             >
-              {t('DASHBOARD_ADD_PAGE')}
+              Add Page
             </button>
           </div>
         </div>

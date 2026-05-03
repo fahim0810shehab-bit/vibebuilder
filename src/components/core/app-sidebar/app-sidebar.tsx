@@ -84,7 +84,7 @@ export const AppSidebar = () => {
 
       <SidebarContent className="text-base ml-4 mr-2 my-3 text-high-emphasis font-normal overflow-x-hidden">
         <MenuSection
-          title={t('CLOUD_INTEGRATED')}
+          title={''}
           items={integratedMenuItems}
           showText={open || isMobile}
           pathname={pathname}
@@ -92,7 +92,7 @@ export const AppSidebar = () => {
         />
 
         <MenuSection
-          title={t('DESIGN_ONLY')}
+          title={''}
           items={designOnlyMenuItems}
           showText={open || isMobile}
           pathname={pathname}

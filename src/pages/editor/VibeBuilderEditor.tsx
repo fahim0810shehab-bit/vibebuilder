@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/state/store/auth';
 import { contentService } from '@/services/contentService';
 import { mediaService } from '@/services/mediaService';
@@ -262,19 +261,18 @@ function Inspector({ node, onChange, onImageUpload }: {
   onChange: (field: string, value: string) => void;
   onImageUpload: (file: File) => void;
 }) {
-  const { t } = useTranslation();
   const fields: { label: string; key: string; type?: string; options?: string[] }[] = [
-    { label: t('EDITOR_FIELD_CONTENT') || 'Content', key: 'content' },
+    { label: 'Content', key: 'content' },
     { label: 'Link URL', key: 'href' },
     { label: 'Alt Text', key: 'alt' },
-    { label: t('EDITOR_FIELD_BACKGROUND') || 'Background', key: 'backgroundColor', type: 'color' },
-    { label: t('EDITOR_FIELD_TEXT_COLOR') || 'Text Color', key: 'color', type: 'color' },
-    { label: t('EDITOR_FIELD_FONT_SIZE') || 'Font Size', key: 'fontSize' },
+    { label: 'Background', key: 'backgroundColor', type: 'color' },
+    { label: 'Text Color', key: 'color', type: 'color' },
+    { label: 'Font Size', key: 'fontSize' },
     { label: 'Line Height', key: 'lineHeight' },
-    { label: t('EDITOR_FIELD_PADDING') || 'Padding', key: 'padding' },
+    { label: 'Padding', key: 'padding' },
     { label: 'Max Width', key: 'maxWidth' },
-    { label: t('EDITOR_FIELD_TEXT_ALIGN') || 'Text Align', key: 'textAlign', type: 'select', options: ['left', 'center', 'right', 'justify'] },
-    { label: t('EDITOR_FIELD_BORDER_RADIUS') || 'Border Radius', key: 'borderRadius' },
+    { label: 'Text Align', key: 'textAlign', type: 'select', options: ['left', 'center', 'right', 'justify'] },
+    { label: 'Border Radius', key: 'borderRadius' },
     { label: 'Border Width', key: 'borderWidth' },
     { label: 'Border Color', key: 'borderColor', type: 'color' },
     { label: 'Box Shadow', key: 'boxShadow' },
@@ -288,13 +286,13 @@ function Inspector({ node, onChange, onImageUpload }: {
   return (
     <div className="space-y-4">
       <div className="bg-gray-800/50 rounded-lg px-3 py-2">
-        <span className="text-xs text-gray-500 uppercase tracking-wider">{t('EDITOR_INSPECTOR_TYPE_LABEL')}</span>
+        <span className="text-xs text-gray-500 uppercase tracking-wider">Type</span>
         <span className="text-xs font-semibold text-violet-400 uppercase">{node.type}</span>
       </div>
 
       {node.type === 'image' && (
         <div>
-          <label className="block text-xs text-gray-400 mb-1">{t('EDITOR_INSPECTOR_IMAGE_SRC_LABEL')}</label>
+          <label className="block text-xs text-gray-400 mb-1">Image Source URL</label>
           <input
             type="text"
             value={node.src ?? ''}
@@ -303,7 +301,7 @@ function Inspector({ node, onChange, onImageUpload }: {
             className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-violet-500"
           />
           <label className="mt-2 flex items-center gap-2 cursor-pointer">
-            <span className="text-xs bg-violet-700 hover:bg-violet-600 text-white px-3 py-1.5 rounded-lg transition-colors">{t('EDITOR_INSPECTOR_BTN_UPLOAD_IMAGE')}</span>
+            <span className="text-xs bg-violet-700 hover:bg-violet-600 text-white px-3 py-1.5 rounded-lg transition-colors">Upload Image</span>
             <input type="file" accept="image/*" className="hidden" onChange={(e) => {
               const f = e.target.files?.[0];
               if (f) onImageUpload(f);
@@ -348,7 +346,6 @@ function Inspector({ node, onChange, onImageUpload }: {
 const COMPONENT_TYPES: VibeNode['type'][] = ['hero', 'section', 'text', 'image', 'button', 'divider', 'spacer', 'form', 'video', 'gallery', 'testimonial', 'social-links', 'card', 'two-columns', 'navbar', 'footer'];
 
 export default function VibeBuilderEditor() {
-  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const pageId = searchParams.get('pageId');
   const { user, accessToken } = useAuthStore();
@@ -504,7 +501,7 @@ export default function VibeBuilderEditor() {
   const save = useCallback(async () => {
     if (!site?.id || !page) return;
     setSaving(true);
-    setStatus(t('EDITOR_STATUS_SAVING'));
+    setStatus('Saving...');
     const updatedPage: VibePage = {
       ...page,
       rootNode: { ...page.rootNode, children: nodes },
@@ -514,9 +511,9 @@ export default function VibeBuilderEditor() {
       await contentService.update(site.id, { is_published: site.is_published, pages: updatedPages });
       setSite({ ...site, pages: updatedPages });
       setPage(updatedPage);
-      setStatus(t('EDITOR_STATUS_SAVED'));
+      setStatus('Saved ✓');
     } catch {
-      setStatus(t('EDITOR_STATUS_SAVE_FAILED'));
+      setStatus('Save Failed');
     } finally {
       setSaving(false);
       setTimeout(() => setStatus(''), 2000);
@@ -603,7 +600,7 @@ export default function VibeBuilderEditor() {
   if (!page) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <p className="text-gray-400">{t('EDITOR_ERR_PAGE_NOT_FOUND')}</p>
+        <p className="text-gray-400">Page not found</p>
       </div>
     );
   }
@@ -613,24 +610,24 @@ export default function VibeBuilderEditor() {
       {/* Top Bar */}
       <div className="h-14 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-4 gap-4 shrink-0 z-20">
         <div className="flex items-center gap-3">
-          <a href="/vibebuilder" className="text-gray-400 hover:text-white transition-colors text-sm">{t('EDITOR_DASHBOARD_LINK')}</a>
+          <a href="/vibebuilder" className="text-gray-400 hover:text-white transition-colors text-sm">← Dashboard</a>
           <span className="text-gray-600">|</span>
           <span className="text-white font-semibold text-sm">{page.name}</span>
         </div>
         <div className="flex items-center gap-2">
           {status && <span className="text-xs text-gray-400 mr-2">{status}</span>}
           <button onClick={undo} disabled={histIdx <= 0}
-            className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 disabled:opacity-30 text-white text-xs rounded-lg transition-all">{t('EDITOR_BTN_UNDO')}</button>
+            className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 disabled:opacity-30 text-white text-xs rounded-lg transition-all">Undo</button>
           <button onClick={redo} disabled={histIdx >= history.length - 1}
-            className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 disabled:opacity-30 text-white text-xs rounded-lg transition-all">{t('EDITOR_BTN_REDO')}</button>
+            className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 disabled:opacity-30 text-white text-xs rounded-lg transition-all">Redo</button>
           <button onClick={save} disabled={saving}
             className="px-4 py-1.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-xs font-semibold rounded-lg transition-all">
-            {saving ? t('EDITOR_STATUS_SAVING') : t('EDITOR_BTN_SAVE')}
+            {saving ? 'Saving...' : 'Save'}
           </button>
           <button
             onClick={() => window.open(`/site/${username}/${page.path}`, '_blank')}
             className="px-4 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-xs font-semibold rounded-lg transition-all"
-          >{t('EDITOR_BTN_PREVIEW')}</button>
+          >Preview</button>
         </div>
       </div>
 
@@ -638,7 +635,7 @@ export default function VibeBuilderEditor() {
       <div className="flex flex-1 overflow-hidden">
         {/* LEFT: Component Library */}
         <div className="w-60 bg-gray-900 border-r border-gray-800 flex flex-col shrink-0 overflow-y-auto">
-          <p className="text-xs text-gray-500 uppercase tracking-widest px-4 pt-4 pb-2 font-semibold">{t('EDITOR_COMPONENTS_HEADING')}</p>
+          <p className="text-xs text-gray-500 uppercase tracking-widest px-4 pt-4 pb-2 font-semibold">Components</p>
           <div className="px-3 pb-4 space-y-1">
             {COMPONENT_TYPES.map((type) => (
               <button key={type} onClick={() => addNode(type)}
@@ -657,7 +654,7 @@ export default function VibeBuilderEditor() {
           <div className="min-h-full p-4" style={{ minWidth: '360px' }}>
             {nodes.length === 0 && (
               <div className="flex items-center justify-center h-96 text-gray-400 text-sm border-2 border-dashed border-gray-300 rounded-xl m-4">
-                {t('EDITOR_EMPTY_CANVAS_TEXT')}
+                Click a component to add it
               </div>
             )}
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -684,7 +681,7 @@ export default function VibeBuilderEditor() {
 
         {/* RIGHT: Inspector */}
         <div className="w-72 bg-gray-900 border-l border-gray-800 flex flex-col shrink-0 overflow-y-auto">
-          <p className="text-xs text-gray-500 uppercase tracking-widest px-4 pt-4 pb-2 font-semibold">{t('EDITOR_INSPECTOR_HEADING')}</p>
+          <p className="text-xs text-gray-500 uppercase tracking-widest px-4 pt-4 pb-2 font-semibold">Inspector</p>
           <div className="px-4 pb-4">
             {selectedNode ? (
               <Inspector
@@ -693,7 +690,7 @@ export default function VibeBuilderEditor() {
                 onImageUpload={handleImageUpload}
               />
             ) : (
-              <p className="text-gray-600 text-sm">{t('EDITOR_INSPECTOR_NO_SELECTION')}</p>
+              <p className="text-gray-600 text-sm">Select an element to edit</p>
             )}
           </div>
         </div>
