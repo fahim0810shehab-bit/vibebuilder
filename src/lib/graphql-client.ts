@@ -16,15 +16,15 @@ import { clients } from './https';
  *
  * @example
  * // Query request
- * const data = await graphqlClient.query<InventoryResponse>({
- *   query: GET_INVENTORY_QUERY,
- *   variables: { page: 1, pageSize: 10 }
+ * const data = await graphqlClient.query<any>({
+ *   query: MY_QUERY,
+ *   variables: { id: 1 }
  * });
  *
  * // Mutation request
- * const result = await graphqlClient.mutate<CreateInventoryResponse>({
- *   mutation: CREATE_INVENTORY_MUTATION,
- *   variables: { input: itemData }
+ * const result = await graphqlClient.mutate<any>({
+ *   mutation: MY_MUTATION,
+ *   variables: { input: data }
  * });
  */
 

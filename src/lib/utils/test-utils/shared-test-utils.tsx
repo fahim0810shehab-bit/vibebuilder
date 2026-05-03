@@ -220,7 +220,7 @@ export const createMockTranslation = () => (key: string) => key;
 
 /**
  * Creates mock Card component family (Card, CardHeader, CardContent, CardTitle, CardDescription)
- * Used by: dashboard, invoices, and other components using card UI
+ * Used by: dashboard and other components using card UI
  *
  * NOTE: Copy this implementation inline in vi.mock() - do not import and call this function
  */
@@ -832,9 +832,9 @@ export const createFinanceOverviewServicesMock = () => {
         }
       ),
       createInlineMetric(
-        'OUTSTANDING_INVOICES',
-        '11,200.00',
-        'file-text-icon',
+        'TOTAL_USERS',
+        '1,200',
+        'users-icon',
         'text-purple-500',
         'bg-surface rounded-[4px]'
       ),
