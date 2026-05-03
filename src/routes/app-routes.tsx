@@ -24,6 +24,18 @@ export const AppRoutes = () => {
         <SidebarProvider>
           <Routes>
             {AuthRoutes}
+
+            {/* Full-viewport Editor — NO sidebar, NO top header */}
+            <Route
+              path="/editor"
+              element={
+                <Guard>
+                  <VibeBuilderEditor />
+                </Guard>
+              }
+            />
+
+            {/* Standard layout routes */}
             <Route
               element={
                 <Guard>
@@ -32,7 +44,6 @@ export const AppRoutes = () => {
               }
             >
               <Route path="/vibebuilder" element={<VibeBuilderDashboard />} />
-              <Route path="/editor" element={<VibeBuilderEditor />} />
               <Route path="/404" element={<NotFoundPage />} />
             </Route>
 

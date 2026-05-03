@@ -6,6 +6,7 @@ import { mediaService } from '@/services/mediaService';
 import { SiteData, VibeNode, VibePage } from '@/types/vibe';
 import { v4 as uuidv4 } from 'uuid';
 import { decodeJWT } from '@/lib/utils/decode-jwt-utils';
+import { ThemeSwitcher, LanguageSelector } from '@/components/core';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -679,6 +680,11 @@ export default function VibeBuilderEditor() {
             onClick={() => window.open(`/site/${username}/${page.path}`, '_blank')}
             className="px-4 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-xs font-semibold rounded-lg transition-all"
           >Preview</button>
+          {/* Theme & Language — moved from global header */}
+          <div className="flex items-center gap-1 ml-2 pl-2 border-l border-gray-700">
+            <ThemeSwitcher />
+            <LanguageSelector />
+          </div>
         </div>
       </div>
 
