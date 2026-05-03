@@ -46,8 +46,13 @@ export default function VibeBuilderDashboard() {
   const loadSite = useCallback(async () => {
     if (!userId) return;
     setLoading(true);
+    setError(null);
     try {
-      let data = await contentService.getByUserId(userId);
+      let data = await Promise.race([
+        contentService.getByUserId(userId),
+        new Promise<null>((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+      ]);
+      
       if (!data) {
         // Create default site
         data = await contentService.create({
@@ -59,7 +64,18 @@ export default function VibeBuilderDashboard() {
       }
       setSite(data);
     } catch (e) {
-      setError('Load Failed');
+      console.error('Dashboard load failed:', e);
+      // Fallback
+      const local = localStorage.getItem('vibe_site_' + userId);
+      if (local) {
+        try {
+          setSite(JSON.parse(local));
+        } catch {
+          setError('Failed to load site from backup.');
+        }
+      } else {
+        setError('Network timeout. Please check your connection.');
+      }
     } finally {
       setLoading(false);
     }
@@ -165,6 +181,18 @@ export default function VibeBuilderDashboard() {
           <div className="w-10 h-10 border-4 border-violet-500 border-t-transparent rounded-full animate-spin" />
           <p className="text-gray-400 text-sm">Loading site...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (error && !site) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center p-6 text-center">
+        <h2 className="text-2xl font-bold text-white mb-2">Something went wrong</h2>
+        <p className="text-red-400 mb-6">{error}</p>
+        <button onClick={loadSite} className="px-6 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg">
+          Try Again
+        </button>
       </div>
     );
   }

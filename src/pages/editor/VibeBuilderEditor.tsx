@@ -357,6 +357,7 @@ export default function VibeBuilderEditor() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
 
   // Undo/redo history
   const [history, setHistory] = useState<VibeNode[][]>([]);
@@ -374,20 +375,55 @@ export default function VibeBuilderEditor() {
   // Load site & page
   useEffect(() => {
     if (!userId || !pageId) return;
-    (async () => {
+    
+    const loadSite = async () => {
       setLoading(true);
-      const data = await contentService.getByUserId(userId);
-      if (data) {
-        setSite(data);
-        const pg = data.pages.find((p) => p.id === pageId) ?? null;
-        setPage(pg);
-        const initial = pg?.rootNode?.children ?? [];
-        setNodes(initial);
-        setHistory([initial]);
-        setHistIdx(0);
+      setError(null);
+      try {
+        const data = await Promise.race([
+          contentService.getByUserId(userId),
+          new Promise<null>((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+        ]);
+
+        if (data) {
+          setSite(data);
+          const pg = data.pages.find((p) => p.id === pageId) ?? data.pages[0];
+          if (pg) {
+            setPage(pg);
+            const initial = pg.rootNode?.children ?? [];
+            setNodes(initial);
+            setHistory([initial]);
+            setHistIdx(0);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load site:', err);
+        // Load from localStorage as fallback
+        const local = localStorage.getItem('vibe_site_' + userId);
+        if (local) {
+          try {
+            const data = JSON.parse(local);
+            setSite(data);
+            const pg = data.pages?.find((p: any) => p.id === pageId) ?? data.pages?.[0];
+            if (pg) {
+              setPage(pg);
+              const initial = pg.rootNode?.children ?? [];
+              setNodes(initial);
+              setHistory([initial]);
+              setHistIdx(0);
+            }
+          } catch (e) {
+            setError('Failed to load site from backup.');
+          }
+        } else {
+          setError('Network timeout. Please check your connection.');
+        }
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    })();
+    };
+
+    loadSite();
   }, [userId, pageId]);
 
   // Push to history on nodes change
@@ -593,6 +629,18 @@ export default function VibeBuilderEditor() {
           {/* Inspector skeleton */}
           <div className="w-72 bg-gray-900 rounded animate-pulse" />
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center p-6 text-center">
+        <h2 className="text-2xl font-bold text-white mb-2">Something went wrong</h2>
+        <p className="text-red-400 mb-6">{error}</p>
+        <button onClick={() => window.location.reload()} className="px-6 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg">
+          Try Again
+        </button>
       </div>
     );
   }
