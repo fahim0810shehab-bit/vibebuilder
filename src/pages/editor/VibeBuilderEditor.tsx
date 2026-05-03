@@ -5,6 +5,7 @@ import { contentService } from '@/services/contentService';
 import { mediaService } from '@/services/mediaService';
 import { SiteData, VibeNode, VibePage } from '@/types/vibe';
 import { v4 as uuidv4 } from 'uuid';
+import { decodeJWT } from '@/lib/utils/decode-jwt-utils';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -364,8 +365,10 @@ export default function VibeBuilderEditor() {
   const [histIdx, setHistIdx] = useState(-1);
   const isUndoRedo = useRef(false);
 
-  const userId = user?.itemId ?? user?.email ?? '';
-  const username = user?.userName ?? user?.email?.split('@')[0] ?? 'user';
+  // Extract userId from user object or directly from JWT (handles Zustand rehydration timing)
+  const jwtPayload = accessToken ? decodeJWT(accessToken) as any : null;
+  const userId = user?.itemId ?? user?.email ?? jwtPayload?.sub ?? jwtPayload?.itemId ?? jwtPayload?.userId ?? '';
+  const username = user?.userName ?? user?.email?.split('@')[0] ?? jwtPayload?.preferred_username ?? 'user';
 
   // Store token
   useEffect(() => {

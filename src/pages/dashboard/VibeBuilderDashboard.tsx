@@ -4,6 +4,7 @@ import { useAuthStore } from '@/state/store/auth';
 import { contentService } from '@/services/contentService';
 import { SiteData, VibePage } from '@/types/vibe';
 import { v4 as uuidv4 } from 'uuid';
+import { decodeJWT } from '@/lib/utils/decode-jwt-utils';
 
 function makeDefaultPage(name: string, path: string): VibePage {
   return {
@@ -40,8 +41,10 @@ export default function VibeBuilderDashboard() {
   const [copied, setCopied] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
-  const userId = user?.itemId ?? user?.email ?? '';
-  const username = user?.userName ?? user?.email?.split('@')[0] ?? 'user';
+  // Extract userId — fall back to JWT sub claim if user object hasn't hydrated yet
+  const jwtPayload = accessToken ? decodeJWT(accessToken) as any : null;
+  const userId = user?.itemId ?? user?.email ?? jwtPayload?.sub ?? jwtPayload?.itemId ?? jwtPayload?.userId ?? '';
+  const username = user?.userName ?? user?.email?.split('@')[0] ?? jwtPayload?.preferred_username ?? 'user';
 
   const loadSite = useCallback(async () => {
     if (!userId) return;
@@ -89,6 +92,20 @@ export default function VibeBuilderDashboard() {
   useEffect(() => {
     if (accessToken) localStorage.setItem('access_token', accessToken);
   }, [accessToken]);
+
+  // If userId is empty but we have an accessToken, reload to wait for user to hydrate
+  useEffect(() => {
+    if (!userId && accessToken) {
+      // Zustand is still rehydrating — wait briefly then retry
+      const timer = setTimeout(() => {
+        // Force re-render by setting a dummy state
+        setError(null);
+        setLoading(true);
+        loadSite();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [userId, accessToken, loadSite]);
 
   const saveSite = async (updated: SiteData) => {
     if (!updated.id) return;
