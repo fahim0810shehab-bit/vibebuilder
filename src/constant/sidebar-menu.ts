@@ -15,5 +15,6 @@ const createMenuItem = (
 });
 
 export const menuItems: MenuItem[] = [
-  createMenuItem('vibebuilder', 'VibeBuilder', '/vibebuilder', 'LayoutDashboard'),
+  createMenuItem('vibebuilder', 'My Website', '/vibebuilder', 'Globe'),
+  createMenuItem('editor', 'Editor', '/editor', 'Edit'),
 ];

@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/state/store/auth';
 import { contentService } from '@/services/contentService';
 import { SiteData, VibePage } from '@/types/vibe';
@@ -28,6 +29,7 @@ function makeDefaultPage(name: string, path: string): VibePage {
 }
 
 export default function VibeBuilderDashboard() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, accessToken } = useAuthStore();
   const [site, setSite] = useState<SiteData | null>(null);
@@ -35,6 +37,10 @@ export default function VibeBuilderDashboard() {
   const [saving, setSaving] = useState(false);
   const [newPageName, setNewPageName] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [editingPageId, setEditingPageId] = useState<string | null>(null);
+  const [editPageName, setEditPageName] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   const userId = user?.itemId ?? user?.email ?? '';
   const username = user?.userName ?? user?.email?.split('@')[0] ?? 'user';
@@ -55,7 +61,7 @@ export default function VibeBuilderDashboard() {
       }
       setSite(data);
     } catch (e) {
-      setError('Failed to load site data.');
+      setError(t('DASHBOARD_ERR_LOAD_FAILED'));
     } finally {
       setLoading(false);
     }
@@ -79,8 +85,9 @@ export default function VibeBuilderDashboard() {
         pages: updated.pages,
       });
       setSite(updated);
+      setLastSaved(new Date());
     } catch {
-      setError('Failed to save. Changes saved locally.');
+      setError(t('DASHBOARD_ERR_SAVE_FAILED'));
     } finally {
       setSaving(false);
     }
@@ -104,11 +111,53 @@ export default function VibeBuilderDashboard() {
   const deletePage = async (pageId: string) => {
     if (!site) return;
     if (site.pages.length <= 1) {
-      setError('Cannot delete the last page.');
+      setError(t('DASHBOARD_ERR_DELETE_LAST_PAGE'));
       return;
     }
     const updated = { ...site, pages: site.pages.filter((p) => p.id !== pageId) };
     await saveSite(updated);
+  };
+
+  const duplicatePage = async (page: VibePage) => {
+    if (!site) return;
+    const newPage = { ...page, id: uuidv4(), name: `${page.name} (Copy)`, path: `${page.path}-copy` };
+    const updated = { ...site, pages: [...site.pages, newPage] };
+    await saveSite(updated);
+  };
+
+  const movePage = async (index: number, direction: -1 | 1) => {
+    if (!site) return;
+    if (index + direction < 0 || index + direction >= site.pages.length) return;
+    const newPages = [...site.pages];
+    [newPages[index], newPages[index + direction]] = [newPages[index + direction], newPages[index]];
+    const updated = { ...site, pages: newPages };
+    await saveSite(updated);
+  };
+
+  const setAsHomepage = async (pageId: string) => {
+    if (!site) return;
+    const newPages = site.pages.map(p => {
+      if (p.id === pageId) return { ...p, path: 'home' };
+      if (p.path === 'home') return { ...p, path: `${p.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}` };
+      return p;
+    });
+    await saveSite({ ...site, pages: newPages });
+  };
+
+  const savePageName = async (pageId: string) => {
+    if (!site || !editPageName.trim()) {
+      setEditingPageId(null);
+      return;
+    }
+    const newPages = site.pages.map(p => p.id === pageId ? { ...p, name: editPageName.trim() } : p);
+    await saveSite({ ...site, pages: newPages });
+    setEditingPageId(null);
+  };
+
+  const copyUrl = (url: string) => {
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   if (loading) {
@@ -116,7 +165,7 @@ export default function VibeBuilderDashboard() {
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-10 h-10 border-4 border-violet-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-gray-400 text-sm">Loading your site...</p>
+          <p className="text-gray-400 text-sm">{t('DASHBOARD_LOADING_SITE')}</p>
         </div>
       </div>
     );
@@ -153,16 +202,22 @@ export default function VibeBuilderDashboard() {
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Your Site</p>
+              <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">{t('DASHBOARD_SITE_INFO_LABEL')}</p>
               <h2 className="text-2xl font-bold text-white">@{site?.username}</h2>
-              <a
-                href={`/site/${site?.username}/home`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-violet-400 hover:text-violet-300 text-sm transition-colors mt-1 inline-block"
-              >
-                /site/{site?.username}/home ↗
-              </a>
+              <div className="flex items-center gap-2 mt-1">
+                <a
+                  href={`/site/${site?.username}/home`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-violet-400 hover:text-violet-300 text-sm transition-colors inline-block"
+                >
+                  {window.location.origin}/site/{site?.username}/home ↗
+                </a>
+                <button onClick={() => copyUrl(`${window.location.origin}/site/${site?.username}/home`)}
+                  className="text-gray-400 hover:text-white text-xs px-2 py-1 bg-gray-800 rounded">
+                  {copied ? 'Copied!' : 'Copy'}
+                </button>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <span
@@ -172,7 +227,7 @@ export default function VibeBuilderDashboard() {
                     : 'bg-gray-800 text-gray-400 border border-gray-700'
                 }`}
               >
-                {site?.is_published ? '● Live' : '○ Draft'}
+                {site?.is_published ? `● ${t('DASHBOARD_STATUS_LIVE')}` : `○ ${t('DASHBOARD_STATUS_DRAFT')}`}
               </span>
               <button
                 onClick={togglePublish}
@@ -183,42 +238,88 @@ export default function VibeBuilderDashboard() {
                     : 'bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white shadow-lg shadow-violet-900/30'
                 }`}
               >
-                {saving ? 'Saving...' : site?.is_published ? 'Unpublish' : 'Publish Site'}
+                {saving ? t('DASHBOARD_SAVING') : site?.is_published ? t('DASHBOARD_UNPUBLISH') : t('DASHBOARD_PUBLISH')}
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-3 gap-4">
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+            <p className="text-xs text-gray-500 uppercase">Total Pages</p>
+            <p className="text-xl font-bold text-white mt-1">{site?.pages.length ?? 0}</p>
+          </div>
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+            <p className="text-xs text-gray-500 uppercase">Status</p>
+            <p className="text-xl font-bold text-white mt-1">{site?.is_published ? 'Published' : 'Draft'}</p>
+          </div>
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+            <p className="text-xs text-gray-500 uppercase">Last Modified</p>
+            <p className="text-xl font-bold text-white mt-1 text-sm">{lastSaved ? lastSaved.toLocaleTimeString() : 'Unknown'}</p>
           </div>
         </div>
 
         {/* Pages */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">Pages</h3>
-            <span className="text-sm text-gray-500">{site?.pages.length ?? 0} page(s)</span>
+            <h3 className="text-lg font-semibold text-white">{t('DASHBOARD_PAGES_HEADING')}</h3>
+            <span className="text-sm text-gray-500">{t('DASHBOARD_PAGE_COUNT', { count: site?.pages.length ?? 0 })}</span>
           </div>
 
           <div className="space-y-3">
-            {site?.pages.map((page) => (
+            {site?.pages.map((page, index) => (
               <div
                 key={page.id}
                 className="group bg-gray-900 border border-gray-800 hover:border-gray-700 rounded-xl px-5 py-4 flex items-center justify-between transition-all"
               >
-                <div>
-                  <p className="font-medium text-white">{page.name}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">/{page.path}</p>
+                <div className="flex-1 flex items-center gap-3">
+                  <div className="flex flex-col">
+                    <button onClick={() => movePage(index, -1)} disabled={index === 0} className="text-gray-500 hover:text-white disabled:opacity-30">↑</button>
+                    <button onClick={() => movePage(index, 1)} disabled={index === site.pages.length - 1} className="text-gray-500 hover:text-white disabled:opacity-30">↓</button>
+                  </div>
+                  <div>
+                    {editingPageId === page.id ? (
+                      <input
+                        autoFocus
+                        value={editPageName}
+                        onChange={(e) => setEditPageName(e.target.value)}
+                        onBlur={() => savePageName(page.id)}
+                        onKeyDown={(e) => e.key === 'Enter' && savePageName(page.id)}
+                        className="bg-gray-800 text-white px-2 py-1 rounded outline-none border border-violet-500"
+                      />
+                    ) : (
+                      <p className="font-medium text-white cursor-pointer hover:text-violet-400" onClick={() => { setEditingPageId(page.id); setEditPageName(page.name); }}>
+                        {page.name}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-xs text-gray-500">/{page.path}</p>
+                      {page.path === 'home' && <span className="text-[10px] bg-violet-900/50 text-violet-300 px-1.5 rounded">Homepage</span>}
+                    </div>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  {page.path !== 'home' && (
+                    <button onClick={() => setAsHomepage(page.id)} className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm transition-all hidden group-hover:block">
+                      Set as Home
+                    </button>
+                  )}
+                  <button onClick={() => duplicatePage(page)} className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm transition-all hidden group-hover:block">
+                    Duplicate
+                  </button>
                   <button
                     onClick={() => navigate(`/editor?pageId=${page.id}`)}
                     className="px-4 py-1.5 bg-violet-600/20 hover:bg-violet-600/40 border border-violet-700/50 text-violet-300 hover:text-white rounded-lg text-sm transition-all"
                   >
-                    Edit
+                    {t('DASHBOARD_EDIT')}
                   </button>
                   <button
                     onClick={() => deletePage(page.id)}
                     disabled={site.pages.length <= 1}
                     className="px-3 py-1.5 bg-red-900/20 hover:bg-red-900/40 border border-red-800/50 text-red-400 hover:text-red-300 rounded-lg text-sm transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                   >
-                    Delete
+                    {t('DASHBOARD_DELETE')}
                   </button>
                 </div>
               </div>
@@ -232,7 +333,7 @@ export default function VibeBuilderDashboard() {
               value={newPageName}
               onChange={(e) => setNewPageName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && addPage()}
-              placeholder="New page name…"
+              placeholder={t('DASHBOARD_INPUT_NEW_PAGE_PLACEHOLDER')}
               className="flex-1 bg-gray-900 border border-gray-700 focus:border-violet-500 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 outline-none transition-colors"
             />
             <button
@@ -240,7 +341,7 @@ export default function VibeBuilderDashboard() {
               disabled={!newPageName.trim() || saving}
               className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white rounded-lg text-sm font-medium transition-all"
             >
-              Add Page
+              {t('DASHBOARD_ADD_PAGE')}
             </button>
           </div>
         </div>

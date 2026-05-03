@@ -59,6 +59,14 @@ export function LanguageProvider({
   // Start with a temporary language - will be updated once API default is loaded
   const [currentLanguage, setCurrentLanguage] = useState<string>(defaultLanguage);
 
+  // Set projectKey for UILM extension support
+  useEffect(() => {
+    const projectKey = import.meta.env.VITE_X_BLOCKS_KEY;
+    if (projectKey && typeof window !== 'undefined') {
+      localStorage.setItem('projectKey', projectKey);
+    }
+  }, []);
+
   const [isLoading, setIsLoading] = useState(true);
   const { i18n } = useTranslation();
   const { data: languages = [], isLoading: isLanguagesLoading } = useAvailableLanguages();

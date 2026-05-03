@@ -22,7 +22,9 @@ export interface MenuItem {
     | 'ChartNoAxesCombined'
     | 'Folder'
     | 'ReceiptText'
-    | 'MessageSquareText';
+    | 'MessageSquareText'
+    | 'Globe'
+    | 'Edit';
   children?: MenuItem[];
 
   roles?: string | string[];
