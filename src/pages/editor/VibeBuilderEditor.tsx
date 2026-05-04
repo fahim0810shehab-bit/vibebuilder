@@ -692,19 +692,51 @@ export default function VibeBuilderEditor() {
     updateNode(selectedId, field, value);
   };
 
-  // Image upload
+  // Image upload — saves directly with fresh nodes to avoid stale closure bug.
+  // Previously used setTimeout(save, 500) but save() closes over the OLD nodes
+  // value, so the image URL was never actually persisted to the Data Gateway.
   const handleImageUpload = async (file: File) => {
-    if (!selectedId) return;
+    if (!selectedId || !site || !page) return;
     setStatus('Uploading...');
-    const url = await mediaService.uploadImage(file);
-    const updated = nodes.map((n) => n.id === selectedId ? { 
-      ...n, 
-      src: url,
-      props: { ...n.props, src: url }
-    } : n);
-    updateNodes(updated);
-    // Explicitly trigger a save after image upload to ensure draft is updated
-    setTimeout(save, 500);
+    try {
+      const url = await mediaService.uploadImage(file);
+
+      // Build the updated nodes with the fresh URL in both src and props.src
+      const nodeId = selectedId;
+      const updatedNodes = nodes.map((n) => n.id === nodeId ? {
+        ...n,
+        src: url,
+        props: { ...n.props, src: url }
+      } : n);
+
+      // Update React state
+      updateNodes(updatedNodes);
+
+      // Save immediately with the fresh updatedNodes — do NOT use setTimeout(save)
+      // because save() is a useCallback that closes over the OLD `nodes` ref
+      setSaving(true);
+      setStatus('Saving...');
+      const updatedPage: VibePage = {
+        ...page,
+        rootNode: { ...page.rootNode, children: updatedNodes },
+      };
+      const updatedPages = site.pages.map((p) => (p.id === page.id ? updatedPage : p));
+      const updatedSite = { ...site, pages: updatedPages };
+
+      const saved = await contentService.saveSiteData(updatedSite);
+      if (saved) {
+        setSite(saved);
+        const latestPg = saved.pages.find((p: any) => p.id === page.id) || updatedPage;
+        setPage(latestPg);
+      }
+      setStatus('Saved ✓');
+    } catch (err) {
+      console.error('[EDITOR] Image upload/save failed:', err);
+      setStatus('Upload failed');
+    } finally {
+      setSaving(false);
+      setTimeout(() => setStatus(''), 2000);
+    }
   };
 
   const copyNode = useCallback((node: VibeNode) => {
