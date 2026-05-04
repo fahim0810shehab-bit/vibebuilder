@@ -125,13 +125,17 @@ export default function PublicSite() {
   const [activePageSlug, setActivePageSlug] = useState(pageSlug);
 
   const userId = user?.itemId ?? user?.email ?? '';
-  const isOwner = site?.user_id === userId;
+  const isOwner = site && (site.user_id === userId);
+
+  // Helper to sanitize path for comparison (strip leading/trailing slashes)
+  const cleanPath = (p: string) => p.replace(/^\/+|\/+$/g, '');
 
   useEffect(() => {
     if (!username) return;
     (async () => {
       setLoading(true);
-      const data = await contentService.getByUsername(username);
+      // Try to fetch with authentication if available (to see drafts)
+      const data = await contentService.getSiteByUsername(username, false);
       setSite(data);
       setLoading(false);
     })();
@@ -159,7 +163,7 @@ export default function PublicSite() {
     );
   }
 
-  if (!site || !site.is_published) {
+  if (!site || (!site.is_published && !isOwner)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center p-8 bg-white rounded-2xl shadow-xl max-w-md w-full border border-gray-100">
@@ -177,8 +181,8 @@ export default function PublicSite() {
   }
 
   const activePage = activePageSlug
-    ? site.pages.find((p) => p.path === activePageSlug)
-    : site.pages.find((p) => p.path === 'home') || site.pages[0];
+    ? site.pages.find((p) => cleanPath(p.path) === cleanPath(activePageSlug))
+    : site.pages.find((p) => cleanPath(p.path) === 'home') || site.pages[0];
 
   if (!activePage) {
     return (

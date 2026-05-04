@@ -91,14 +91,14 @@ export const contentService = {
     return null;
   },
 
-  async getSiteByUsername(username: string): Promise<any | null> {
+  async getSiteByUsername(username: string, isPublic = true): Promise<any | null> {
     const data = await gql(`
       query GetWebsiteByUsername($filter: Website_bool_exp) {
         Website(where: $filter, limit: 1) {
           ItemId UserId Username IsPublished Pages Title Description HomePageId
         }
       }
-    `, { filter: { Username: { _eq: username } } }, true);
+    `, { filter: { Username: { _eq: username } } }, isPublic);
 
     const record = data?.Website?.[0];
     if (!record) {
@@ -184,7 +184,7 @@ export const contentService = {
       pages: [{
         id: 'home',
         name: 'Home',
-        path: '/home',
+        path: 'home',
         rootNode: {
           id: 'root',
           type: 'section',

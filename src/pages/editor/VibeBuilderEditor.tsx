@@ -870,7 +870,10 @@ export default function VibeBuilderEditor() {
             <button onClick={() => setViewport('mobile')} className={`px-2 py-1 text-[10px] rounded ${viewport === 'mobile' ? 'bg-background shadow-sm font-bold' : 'text-muted-foreground'}`}>📱 Mobile</button>
           </div>
           <button
-            onClick={() => window.open(`/site/${username}/${page.path}`, '_blank')}
+            onClick={() => {
+              const cleanPath = (page?.path || '').replace(/^\//, '');
+              window.open(`/site/${username}/${cleanPath}`, '_blank');
+            }}
             className="px-4 py-1.5 bg-secondary hover:bg-secondary/80 text-secondary-foreground text-xs font-semibold rounded-lg transition-all"
           >Preview</button>
           <div className="flex items-center gap-1 ml-2 pl-2 border-l border-border">
