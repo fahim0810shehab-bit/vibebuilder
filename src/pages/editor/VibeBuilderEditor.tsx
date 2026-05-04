@@ -505,6 +505,18 @@ export default function VibeBuilderEditor() {
   const [status, setStatus] = useState('');
   const [error, setError] = useState<string | null>(null);
 
+  // Auto-save to localStorage on navigation/close
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (site) {
+        localStorage.setItem(`vibe_site_${site.user_id}`, JSON.stringify(site));
+        localStorage.setItem(`vibe_site_user_${site.username}`, JSON.stringify(site));
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [site]);
+
   // Undo/redo history
   const [history, setHistory] = useState<VibeNode[][]>([]);
   const [histIdx, setHistIdx] = useState(-1);
@@ -699,18 +711,13 @@ export default function VibeBuilderEditor() {
     const updatedSite = { ...site, pages: updatedPages };
 
     try {
-      // Always save to localStorage first as fallback
-      localStorage.setItem(`vibe_site_${userId}`, JSON.stringify(updatedSite));
-      localStorage.setItem(`vibe_${userId}`, JSON.stringify(updatedSite));
-      localStorage.setItem(`vibe_user_${username}`, JSON.stringify(updatedSite));
-
-      await contentService.update(site.itemId, { user_id: site.user_id, is_published: site.is_published, pages: updatedPages });
+      await contentService.saveSiteData(updatedSite);
       setSite(updatedSite);
       setPage(updatedPage);
       setStatus('Saved ✓');
     } catch (err) {
       console.error('[SAVE] Error:', err);
-      // Even if API fails, localStorage save worked
+      // Even if API fails, saveSiteData handled localStorage fallback
       setSite(updatedSite);
       setPage(updatedPage);
       setStatus('Saved ✓'); 
