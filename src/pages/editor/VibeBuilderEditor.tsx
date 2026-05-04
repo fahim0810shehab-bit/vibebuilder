@@ -554,10 +554,24 @@ export default function VibeBuilderEditor() {
   const userId = user?.itemId ?? user?.email ?? jwtPayload?.sub ?? jwtPayload?.itemId ?? jwtPayload?.userId ?? '';
   const username = user?.userName ?? user?.email?.split('@')[0] ?? jwtPayload?.preferred_username ?? 'user';
 
-  // Store token
+  // Store token in localStorage so mediaService can find it
   useEffect(() => {
     if (accessToken) localStorage.setItem('access_token', accessToken);
   }, [accessToken]);
+
+  // Debug: log all localStorage keys on mount to identify token key names
+  useEffect(() => {
+    console.log('[AUTH-DEBUG] localStorage keys:');
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i)!;
+      const v = localStorage.getItem(k) || '';
+      if (v.length > 200) {
+        console.log(`  ${k}: [JWT length=${v.length} starts=${v.substring(0, 15)}]`);
+      } else {
+        console.log(`  ${k}: ${v.substring(0, 100)}`);
+      }
+    }
+  }, []);
 
   // Load site & page
   useEffect(() => {
