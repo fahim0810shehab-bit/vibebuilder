@@ -6,6 +6,7 @@ import { SiteData, VibePage } from '@/types/vibe';
 import { v4 as uuidv4 } from 'uuid';
 import { decodeJWT } from '@/lib/utils/decode-jwt-utils';
 import { ThemeSwitcher, LanguageSelector, ProfileMenu } from '@/components/core';
+import { TEMPLATES } from '@/data/templates';
 
 function makeDefaultPage(name: string, path: string): VibePage {
   return {
@@ -39,6 +40,8 @@ export default function VibeBuilderDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [editingPageId, setEditingPageId] = useState<string | null>(null);
   const [editPageName, setEditPageName] = useState('');
+  const [seoEditingPageId, setSeoEditingPageId] = useState<string | null>(null);
+  const [seoData, setSeoData] = useState({ title: '', description: '', ogImage: '' });
   const [copied, setCopied] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
@@ -140,6 +143,30 @@ export default function VibeBuilderDashboard() {
     await saveSite(updated);
   };
 
+  const createFromTemplate = async (templateData: any) => {
+    if (!userId) return;
+    setLoading(true);
+    try {
+      const newSite: Omit<SiteData, 'id'> = {
+        user_id: userId,
+        username,
+        is_published: false,
+        pages: templateData.pages.map((p: any) => ({ ...p, id: uuidv4() })),
+      };
+      await contentService.create(newSite);
+      await loadSite();
+      // Redirect to the first page of the new site
+      const loaded = await contentService.getByUserId(userId);
+      if (loaded && loaded.pages.length > 0) {
+        navigate(`/editor?pageId=${loaded.pages[0].id}`);
+      }
+    } catch (e) {
+      setError('Failed to create site from template');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const deletePage = async (pageId: string) => {
     if (!site) return;
     if (site.pages.length <= 1) {
@@ -174,6 +201,24 @@ export default function VibeBuilderDashboard() {
       return p;
     });
     await saveSite({ ...site, pages: newPages });
+  };
+
+  const openSeoSettings = (page: VibePage) => {
+    setSeoEditingPageId(page.id);
+    setSeoData({
+      title: page.seo?.title || '',
+      description: page.seo?.description || '',
+      ogImage: page.seo?.ogImage || ''
+    });
+  };
+
+  const saveSeoSettings = async () => {
+    if (!site || !seoEditingPageId) return;
+    const updated = site.pages.map(p => 
+      p.id === seoEditingPageId ? { ...p, seo: seoData } : p
+    );
+    await saveSite({ ...site, pages: updated });
+    setSeoEditingPageId(null);
   };
 
   const savePageName = async (pageId: string) => {
@@ -238,31 +283,66 @@ export default function VibeBuilderDashboard() {
       </header>
 
       {/* Gradient background glow */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/5 rounded-full blur-3xl" />
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-secondary/10 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '1s' }} />
       </div>
 
-      <main className="relative z-10 max-w-5xl mx-auto px-6 py-10 space-y-8">
+      <main className="relative z-10 max-w-6xl mx-auto px-6 py-12 space-y-12">
         {/* Welcome hero strip */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-extrabold text-foreground tracking-tight">
-              Welcome back, <span className="text-primary">{user?.firstName ?? username}</span> 👋
+        <div className="relative overflow-hidden bg-gradient-to-br from-primary/20 via-primary/5 to-transparent border border-primary/20 rounded-3xl p-8 lg:p-12 shadow-2xl shadow-primary/5">
+          <div className="relative z-10">
+            <span className="inline-block px-3 py-1 rounded-full bg-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest mb-4">Workspace</span>
+            <h1 className="text-4xl lg:text-5xl font-black text-foreground tracking-tight leading-tight">
+              Design your dream <br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/60">digital presence.</span>
             </h1>
-            <p className="text-muted-foreground text-sm mt-1">Manage your website, pages and publishing settings.</p>
+            <p className="text-muted-foreground text-sm lg:text-base mt-4 max-w-xl">Welcome back, {user?.firstName ?? username}! Everything you need to build, manage, and scale your website is right here.</p>
           </div>
+          <div className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
         </div>
 
         {error && (
-          <div className="bg-red-900/30 border border-red-700 text-red-300 rounded-lg px-4 py-3 text-sm flex items-center justify-between">
+          <div className="bg-destructive/10 border border-destructive/20 text-destructive rounded-lg px-4 py-3 text-sm flex items-center justify-between">
             <span>{error}</span>
-            <button onClick={() => setError(null)} className="text-red-400 hover:text-white ml-4">✕</button>
+            <button onClick={() => setError(null)} className="text-destructive hover:text-foreground ml-4">✕</button>
           </div>
         )}
 
+        {/* Start from Template */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-foreground">Start from Template</h2>
+            <span className="text-xs text-muted-foreground bg-primary/10 px-2 py-1 rounded-full font-semibold">QUICK START</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {TEMPLATES.map((tmpl) => (
+              <div 
+                key={tmpl.id} 
+                onClick={() => createFromTemplate(tmpl.data)}
+                className="group relative bg-card border border-border hover:border-primary/50 rounded-xl overflow-hidden cursor-pointer transition-all hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1"
+              >
+                <div className="aspect-video w-full overflow-hidden relative">
+                  <img src={tmpl.thumbnail} alt={tmpl.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                    <div className="w-full">
+                      <p className="text-white text-[10px] font-bold uppercase tracking-wider mb-1 opacity-70">Template</p>
+                      <span className="text-white text-sm font-bold block">Start with {tmpl.name} →</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-4 bg-card/50 backdrop-blur-sm">
+                  <h3 className="font-bold text-sm text-foreground">{tmpl.name}</h3>
+                  <p className="text-[10px] text-muted-foreground mt-1 line-clamp-2 leading-relaxed">{tmpl.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* Site Info Card */}
-        <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
-          <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="bg-card/40 backdrop-blur-md border border-border rounded-3xl p-8 space-y-6 shadow-xl relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl -mr-16 -mt-16 group-hover:bg-primary/10 transition-colors" />
+          <div className="flex items-center justify-between flex-wrap gap-6 relative z-10">
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Site Information</p>
               <h2 className="text-2xl font-bold text-foreground">@{site?.username}</h2>
@@ -367,6 +447,9 @@ export default function VibeBuilderDashboard() {
                       Set as Home
                     </button>
                   )}
+                  <button onClick={() => openSeoSettings(page)} className="px-3 py-1.5 bg-muted hover:bg-accent text-muted-foreground rounded-lg text-sm transition-all hidden group-hover:block">
+                    SEO
+                  </button>
                   <button onClick={() => duplicatePage(page)} className="px-3 py-1.5 bg-muted hover:bg-accent text-muted-foreground rounded-lg text-sm transition-all hidden group-hover:block">
                     Duplicate
                   </button>
@@ -387,6 +470,53 @@ export default function VibeBuilderDashboard() {
               </div>
             ))}
           </div>
+
+          {/* SEO Settings Modal-ish overlay */}
+          {seoEditingPageId && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-background/80 backdrop-blur-sm">
+              <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+                <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-muted/30">
+                  <h3 className="font-bold text-foreground">SEO Settings</h3>
+                  <button onClick={() => setSeoEditingPageId(null)} className="text-muted-foreground hover:text-foreground text-lg">✕</button>
+                </div>
+                <div className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">Page Title (Tab Title)</label>
+                    <input 
+                      type="text" 
+                      value={seoData.title} 
+                      onChange={(e) => setSeoData({...seoData, title: e.target.value})}
+                      placeholder="E.g. Portfolio | My Site"
+                      className="w-full bg-background border border-border rounded-lg px-4 py-2 text-sm outline-none focus:border-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">Meta Description</label>
+                    <textarea 
+                      value={seoData.description} 
+                      onChange={(e) => setSeoData({...seoData, description: e.target.value})}
+                      placeholder="Short summary for search engines..."
+                      className="w-full bg-background border border-border rounded-lg px-4 py-2 text-sm outline-none focus:border-primary h-24 resize-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">OG Image URL (Social Share)</label>
+                    <input 
+                      type="text" 
+                      value={seoData.ogImage} 
+                      onChange={(e) => setSeoData({...seoData, ogImage: e.target.value})}
+                      placeholder="https://..."
+                      className="w-full bg-background border border-border rounded-lg px-4 py-2 text-sm outline-none focus:border-primary"
+                    />
+                  </div>
+                </div>
+                <div className="px-6 py-4 bg-muted/30 border-t border-border flex justify-end gap-3">
+                  <button onClick={() => setSeoEditingPageId(null)} className="px-4 py-2 text-sm font-medium hover:text-foreground transition-colors">Cancel</button>
+                  <button onClick={saveSeoSettings} className="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg text-sm font-bold shadow-lg shadow-primary/20">Save Settings</button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Add Page */}
           <div className="flex gap-3 mt-4">

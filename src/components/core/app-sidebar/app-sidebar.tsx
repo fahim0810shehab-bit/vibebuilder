@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { Sidebar, SidebarContent, SidebarHeader, useSidebar } from '@/components/ui-kit/sidebar';
 import { useTheme } from '@/styles/theme/theme-provider';
 import { getSidebarStyle } from '@/lib/utils/sidebar-utils';
@@ -47,7 +46,6 @@ import { menuItems } from '@/constant/sidebar-menu';
 export const AppSidebar = () => {
   const { theme } = useTheme();
   const { pathname } = useLocation();
-  const { t } = useTranslation();
   const { setOpenMobile, open, isMobile, openMobile } = useSidebar();
 
   const filteredMenuItems = useFilteredMenu(menuItems);

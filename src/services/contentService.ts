@@ -5,13 +5,23 @@ const SLUG = import.meta.env.VITE_PROJECT_SLUG;
 const KEY = import.meta.env.VITE_X_BLOCKS_KEY;
 
 function getAuthToken(): string {
-  return (
-    localStorage.getItem('access_token') ||
-    localStorage.getItem('token') ||
-    localStorage.getItem('selise_access_token') ||
-    sessionStorage.getItem('access_token') ||
-    ''
-  );
+  const keys = [
+    'access_token',
+    'token', 
+    'selise_access_token',
+    'selise_token',
+    'auth_token',
+    'blocks_token'
+  ];
+  for (const key of keys) {
+    const val = localStorage.getItem(key) || sessionStorage.getItem(key);
+    if (val) {
+      console.log('[AUTH] Found token in key:', key);
+      return val;
+    }
+  }
+  console.warn('[AUTH] No token found in storage');
+  return '';
 }
 
 function parseRecord(record: any): SiteData {
@@ -148,6 +158,10 @@ export const contentService = {
 
   // FUNCTION 5 - saveSiteData(siteData)
   async saveSiteData(siteData: SiteData): Promise<void> {
+    console.log('[ContentService] saveSiteData called:', siteData);
+    console.log('[ContentService] token:', getAuthToken());
+    console.log('[ContentService] BASE:', BASE, 'SLUG:', SLUG);
+    
     try {
       // First try to find existing record
       const existing = await this.getByUserId(siteData.user_id);
@@ -161,6 +175,7 @@ export const contentService = {
       console.error('[ContentService] saveSiteData failed:', err);
       // Always save to localStorage as backup regardless
       localStorage.setItem(`vibe_site_${siteData.user_id}`, JSON.stringify(siteData));
+      localStorage.setItem(`vibe_user_${siteData.username}`, JSON.stringify(siteData));
     }
   },
 

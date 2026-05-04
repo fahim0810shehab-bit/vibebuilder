@@ -1,6 +1,6 @@
 export interface VibeNode {
   id: string;
-  type: 'section' | 'text' | 'image' | 'button' | 'divider' | 'spacer' | 'hero' | 'form' | 'video' | 'gallery' | 'testimonial' | 'social-links' | 'card' | 'two-columns' | 'navbar' | 'footer';
+  type: 'section' | 'text' | 'image' | 'button' | 'divider' | 'spacer' | 'hero' | 'form' | 'video' | 'gallery' | 'testimonial' | 'social-links' | 'card' | 'two-columns' | 'navbar' | 'footer' | 'container' | 'three-columns' | 'grid' | 'heading' | 'paragraph' | 'rich-text' | 'bullet-list' | 'quote' | 'link' | 'newsletter' | 'feature' | 'pricing' | 'team' | 'stats' | 'faq' | 'icon';
   content?: string;
   src?: string;
   href?: string;
@@ -29,6 +29,11 @@ export interface VibeNode {
     gap?: string;
     [key: string]: any;
   };
+  animation?: {
+    type: 'none' | 'fadeIn' | 'slideUp' | 'slideLeft' | 'zoomIn' | 'bounce';
+    duration: string;
+    delay: string;
+  };
   children: VibeNode[];
 }
 
@@ -37,6 +42,11 @@ export interface VibePage {
   name: string;
   path: string;
   rootNode: VibeNode;
+  seo?: {
+    title: string;
+    description: string;
+    ogImage: string;
+  };
 }
 
 export interface SiteData {
@@ -45,4 +55,13 @@ export interface SiteData {
   username: string;
   is_published: boolean;
   pages: VibePage[];
+  theme?: {
+    primary: string;
+    secondary: string;
+    accent: string;
+    bg: string;
+    text: string;
+    font: string;
+    headingFont: string;
+  };
 }

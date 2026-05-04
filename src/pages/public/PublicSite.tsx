@@ -1,66 +1,118 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuthStore } from '@/state/store/auth';
 import { contentService } from '@/services/contentService';
 import { SiteData, VibeNode } from '@/types/vibe';
 
 function RenderNode({ node }: { node: VibeNode }) {
-  const { type, props, content, src, href, children } = node;
+  const { type, props, content, src, href, children, animation } = node;
   const style = props as React.CSSProperties;
+  const elementRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
 
-  switch (type) {
-    case 'section':
-    case 'hero':
-    case 'gallery':
-    case 'testimonial':
-    case 'social-links':
-    case 'card':
-    case 'two-columns':
-    case 'navbar':
-    case 'footer':
-      return (
-        <div style={style}>
-          {children?.map((child) => (
-            <RenderNode key={child.id} node={child} />
-          ))}
-        </div>
-      );
-    case 'text':
-      return <p style={style}>{content}</p>;
-    case 'image':
-      return <img src={src} style={style} alt={node.alt ?? ''} />;
-    case 'video':
-      return (
-        <iframe
-          src={src}
-          style={style}
-          title="Video"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-          className="block border-0"
-        />
-      );
-    case 'button':
-      return (
-        <a href={href} style={style}>
-          {content}
-        </a>
-      );
-    case 'divider':
-      return <hr style={style} />;
-    case 'spacer':
-      return <div style={{ height: props.height || '48px' }} />;
-    case 'form':
-      return (
-        <form style={style}>
-          {children?.map((child) => (
-            <RenderNode key={child.id} node={child} />
-          ))}
-        </form>
-      );
-    default:
-      return null;
-  }
+  useEffect(() => {
+    if (!animation || animation.type === 'none') {
+      setIsVisible(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(entry.target);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (elementRef.current) {
+      observer.observe(elementRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [animation]);
+
+  const animationStyle: React.CSSProperties = animation && animation.type !== 'none' ? {
+    opacity: isVisible ? 1 : 0,
+    transform: isVisible 
+      ? 'translate(0,0) scale(1)' 
+      : animation.type === 'slideUp' ? 'translateY(30px)' 
+      : animation.type === 'slideLeft' ? 'translateX(30px)'
+      : animation.type === 'zoomIn' ? 'scale(0.9)'
+      : 'none',
+    transition: `all ${animation.duration} ease-out ${animation.delay}`,
+  } : {};
+
+  const renderContent = () => {
+    switch (type) {
+      case 'section':
+      case 'container':
+      case 'hero':
+      case 'gallery':
+      case 'testimonial':
+      case 'social-links':
+      case 'card':
+      case 'two-columns':
+      case 'three-columns':
+      case 'navbar':
+      case 'footer':
+      case 'form':
+      case 'feature':
+      case 'pricing':
+      case 'team':
+      case 'stats':
+      case 'faq':
+        return (
+          <div style={style}>
+            {children?.map((child) => (
+              <RenderNode key={child.id} node={child} />
+            ))}
+          </div>
+        );
+      case 'heading':
+        return <h1 style={style}>{content}</h1>;
+      case 'paragraph':
+      case 'text':
+        return <p style={style}>{content}</p>;
+      case 'image':
+        return <img src={src} style={style} alt={node.alt ?? ''} />;
+      case 'video':
+        return (
+          <iframe
+            src={src}
+            style={style}
+            title="Video"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            className="block border-0"
+          />
+        );
+      case 'button':
+        return (
+          <a href={href} style={style}>
+            {content}
+          </a>
+        );
+      case 'divider':
+        return <hr style={style} />;
+      case 'spacer':
+        return <div style={{ height: props.height || '48px' }} />;
+      case 'icon':
+        return <div style={style} className="flex items-center justify-center font-bold">[{content}]</div>;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div 
+      ref={elementRef} 
+      style={{ ...animationStyle, display: style.display || 'block', position: style.position as any, top: style.top, left: style.left, right: style.right, bottom: style.bottom, zIndex: style.zIndex }}
+    >
+      {renderContent()}
+    </div>
+  );
 }
 
 export default function PublicSite() {
@@ -140,9 +192,20 @@ export default function PublicSite() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      <title>{site.username} - {activePage.name}</title>
-      <meta name="description" content={`Welcome to ${site.username}'s website. Visit the ${activePage.name} page.`} />
+    <div 
+      className="min-h-screen flex flex-col bg-white"
+      style={{
+        ['--vibe-primary' as any]: site?.theme?.primary || '#7c3aed',
+        ['--vibe-secondary' as any]: site?.theme?.secondary || '#06b6d4',
+        ['--vibe-accent' as any]: site?.theme?.accent || '#f59e0b',
+        ['--vibe-bg' as any]: site?.theme?.bg || '#ffffff',
+        ['--vibe-text' as any]: site?.theme?.text || '#09090b',
+        fontFamily: site?.theme?.font || 'Inter, sans-serif'
+      }}
+    >
+      <title>{activePage.seo?.title || `${site.username} - ${activePage.name}`}</title>
+      <meta name="description" content={activePage.seo?.description || `Welcome to ${site.username}'s website. Visit the ${activePage.name} page.`} />
+      {activePage.seo?.ogImage && <meta property="og:image" content={activePage.seo.ogImage} />}
 
       {isOwner && (
         <a href={`/editor?pageId=${activePage.id}`} className="fixed bottom-6 right-6 z-50 bg-violet-600 hover:bg-violet-700 text-white shadow-xl shadow-violet-900/20 px-4 py-3 rounded-full font-medium flex items-center gap-2 transition-transform hover:scale-105">
