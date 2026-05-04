@@ -162,8 +162,13 @@ export function LanguageProvider({
           }
         }
 
+        // Clear cache for this language so modules are re-fetched fresh
+        if (translationCache[language]) {
+          delete translationCache[language];
+        }
+
         await loadLanguageModules(language, location.pathname);
-        i18n.changeLanguage(language);
+        await i18n.changeLanguage(language);
         setCurrentLanguage(language);
         isInitialized.current = true; // Mark as initialized after language change
       } catch (error) {
