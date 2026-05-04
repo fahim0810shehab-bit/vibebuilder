@@ -62,14 +62,12 @@ export default function VibeBuilderDashboard() {
       
       if (!data) {
         // Create default site
-        data = await contentService.create({
-          user_id: userId,
-          username,
-          is_published: false,
-          pages: [makeDefaultPage('Home', 'home')],
-        });
+        const newSite = contentService.createDefault(userId, username);
+        data = await contentService.saveSiteData(newSite);
       }
-      setSite(data);
+      if (data) {
+        setSite(data);
+      }
     } catch (e) {
       console.error('Dashboard load failed:', e);
       // Fallback
@@ -112,17 +110,16 @@ export default function VibeBuilderDashboard() {
   }, [userId, accessToken, loadSite]);
 
   const saveSite = async (updated: SiteData) => {
-    if (!updated.itemId) return;
+    if (!updated.user_id) return;
     setSaving(true);
     try {
-      await contentService.update(updated.itemId, {
-        user_id: updated.user_id,
-        is_published: updated.is_published,
-        pages: updated.pages,
-      });
-      setSite(updated);
-      setLastSaved(new Date());
-    } catch {
+      const saved = await contentService.saveSiteData(updated);
+      if (saved) {
+        setSite(saved);
+        setLastSaved(new Date());
+      }
+    } catch (e) {
+      console.error('Dashboard save failed:', e);
       setError('Save Failed');
     } finally {
       setSaving(false);
@@ -154,14 +151,15 @@ export default function VibeBuilderDashboard() {
         is_published: false,
         pages: templateData.pages.map((p: any) => ({ ...p, id: uuidv4() })),
       };
-      await contentService.create(newSite);
-      await loadSite();
-      // Redirect to the first page of the new site
-      const loaded = await contentService.getByUserId(userId);
-      if (loaded && loaded.pages.length > 0) {
-        navigate(`/editor?pageId=${loaded.pages[0].id}`);
+      const saved = await contentService.saveSiteData(newSite);
+      if (saved) {
+        setSite(saved);
+        if (saved.pages.length > 0) {
+          navigate(`/editor?pageId=${saved.pages[0].id}`);
+        }
       }
     } catch (e) {
+      console.error('Template creation failed:', e);
       setError('Failed to create site from template');
     } finally {
       setLoading(false);

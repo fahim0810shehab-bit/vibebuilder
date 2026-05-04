@@ -668,9 +668,12 @@ export default function VibeBuilderEditor() {
   // Image upload
   const handleImageUpload = async (file: File) => {
     if (!selectedId) return;
+    setStatus('Uploading...');
     const url = await mediaService.uploadImage(file);
     const updated = nodes.map((n) => n.id === selectedId ? { ...n, src: url } : n);
     updateNodes(updated);
+    // Explicitly trigger a save after image upload to ensure draft is updated
+    setTimeout(save, 500);
   };
 
   const copyNode = useCallback((node: VibeNode) => {
@@ -696,13 +699,11 @@ export default function VibeBuilderEditor() {
 
   // Save
   const save = useCallback(async () => {
-    if (!site?.itemId || !page) return;
-    console.log('[SAVE] Save triggered', site);
-    console.log('[SAVE] userId:', userId);
-    console.log('[SAVE] token:', accessToken);
+    if (!site || !page) return;
 
     setSaving(true);
     setStatus('Saving...');
+
     const updatedPage: VibePage = {
       ...page,
       rootNode: { ...page.rootNode, children: nodes },
@@ -711,9 +712,12 @@ export default function VibeBuilderEditor() {
     const updatedSite = { ...site, pages: updatedPages };
 
     try {
-      await contentService.saveSiteData(updatedSite);
-      setSite(updatedSite);
-      setPage(updatedPage);
+      const saved = await contentService.saveSiteData(updatedSite);
+      if (saved) {
+        setSite(saved);
+        const latestPg = saved.pages.find((p: any) => p.id === page.id) || updatedPage;
+        setPage(latestPg);
+      }
       setStatus('Saved ✓');
     } catch (err) {
       console.error('[SAVE] Error:', err);

@@ -1,26 +1,16 @@
+import { getAuthToken } from './contentService';
+
 const BASE = import.meta.env.VITE_API_BASE_URL;
 const KEY = import.meta.env.VITE_X_BLOCKS_KEY;
-
-function getToken(): string {
-  try {
-    const raw = localStorage.getItem('auth-storage');
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      const token = parsed?.state?.accessToken;
-      if (token) return token;
-    }
-  } catch {
-    // ignore
-  }
-  return localStorage.getItem('access_token') ?? '';
-}
+const SLUG = import.meta.env.VITE_PROJECT_SLUG;
 
 export const mediaService = {
   async uploadImage(file: File): Promise<string> {
-    const token = getToken();
+    const token = getAuthToken();
 
     try {
       // Step 1 — get presigned URL
+      // We try with SLUG first as projectKey, fallback to KEY if needed
       const presignRes = await fetch(`${BASE}/uds/v1/Files/GetPreSignedUrlForUpload`, {
         method: 'POST',
         headers: {
@@ -30,19 +20,26 @@ export const mediaService = {
         },
         body: JSON.stringify({
           name: file.name,
-          projectKey: KEY,
+          projectKey: SLUG || KEY,
           moduleName: 8,
           accessModifier: 'Public',
           contentType: file.type,
         }),
       });
 
-      if (!presignRes.ok) throw new Error(`Presign failed: HTTP ${presignRes.status}`);
+      if (!presignRes.ok) {
+        const errText = await presignRes.text();
+        console.warn('[mediaService] Presign failed with status:', presignRes.status, errText);
+        throw new Error(`Presign failed: HTTP ${presignRes.status}`);
+      }
 
       const presignJson = await presignRes.json();
-      const uploadUrl: string = presignJson?.uploadUrl ?? presignJson?.data?.uploadUrl;
+      const uploadUrl: string = presignJson?.uploadUrl || presignJson?.data?.uploadUrl;
 
-      if (!uploadUrl) throw new Error('No uploadUrl in response');
+      if (!uploadUrl) {
+        console.warn('[mediaService] No uploadUrl in response:', presignJson);
+        throw new Error('No uploadUrl in response');
+      }
 
       // Step 2 — upload binary to Azure
       const uploadRes = await fetch(uploadUrl, {
@@ -57,9 +54,12 @@ export const mediaService = {
       if (!uploadRes.ok) throw new Error(`Azure upload failed: HTTP ${uploadRes.status}`);
 
       // Step 3 — return permanent URL (strip SAS query string)
-      return uploadUrl.split('?')[0];
+      const finalUrl = uploadUrl.split('?')[0];
+      console.log('[mediaService] Upload success:', finalUrl);
+      return finalUrl;
     } catch (err) {
       console.warn('[mediaService] Upload failed, returning object URL as fallback', err);
+      // Fallback to object URL so user sees the image locally at least
       return URL.createObjectURL(file);
     }
   },

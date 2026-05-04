@@ -3,29 +3,29 @@ const SLUG = import.meta.env.VITE_PROJECT_SLUG;
 const KEY = import.meta.env.VITE_X_BLOCKS_KEY;
 const GQL = `${BASE}/dgs/v1/${SLUG}/graphql`;
 
-// STEP 1 - Debug localStorage keys
-if (typeof window !== 'undefined') {
-  console.log('[DEBUG] All localStorage keys:');
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key) {
-      console.log(key, ':', localStorage.getItem(key)?.substring(0, 50));
+export const getAuthToken = (): string => {
+  try {
+    const raw = localStorage.getItem('auth-storage');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const token = parsed?.state?.accessToken;
+      if (token) return token;
     }
+  } catch (e) {
+    // ignore
   }
-}
-
-const getToken = (): string =>
-  localStorage.getItem('access_token') ||
-  localStorage.getItem('token') ||
-  localStorage.getItem('selise_access_token') ||
-  localStorage.getItem('selise_token') ||
-  localStorage.getItem('auth_token') ||
-  localStorage.getItem('blocks_token') || '';
+  return localStorage.getItem('access_token') ||
+    localStorage.getItem('token') ||
+    localStorage.getItem('selise_access_token') ||
+    localStorage.getItem('selise_token') ||
+    localStorage.getItem('auth_token') ||
+    localStorage.getItem('blocks_token') || '';
+};
 
 const authHeaders = () => ({
   'Content-Type': 'application/json',
   'x-blocks-key': KEY,
-  'Authorization': `Bearer ${getToken()}`
+  'Authorization': `Bearer ${getAuthToken()}`
 });
 
 const publicHeaders = () => ({
@@ -53,23 +53,14 @@ async function gql(query: string, variables: any, pub = false) {
 
 export const contentService = {
   async getSiteByUserId(userId: string): Promise<any> {
-    // Check localStorage first for instant load
     const localKey = 'vibe_site_' + userId;
     const localData = localStorage.getItem(localKey) || localStorage.getItem('vibe_' + userId);
     
-    // Try Selise API
     try {
       const data = await gql(`
         query GetWebsiteByUserId($filter: Website_bool_exp) {
           Website(where: $filter, limit: 1) {
-            ItemId 
-            UserId 
-            Username 
-            IsPublished 
-            Pages 
-            Title 
-            Description 
-            HomePageId
+            ItemId UserId Username IsPublished Pages Title Description HomePageId
           }
         }
       `, { filter: { UserId: { _eq: userId } } });
@@ -88,7 +79,6 @@ export const contentService = {
             catch { return []; }
           })()
         };
-        // Update localStorage with latest from Selise
         localStorage.setItem(localKey, JSON.stringify(site));
         localStorage.setItem('vibe_site_user_' + site.username, JSON.stringify(site));
         return site;
@@ -97,12 +87,7 @@ export const contentService = {
       console.warn('[LOAD] Selise failed, using localStorage', err);
     }
 
-    // Fall back to localStorage
-    if (localData) {
-      console.log('[LOAD] Using localStorage data');
-      return JSON.parse(localData);
-    }
-
+    if (localData) return JSON.parse(localData);
     return null;
   },
 
@@ -110,14 +95,7 @@ export const contentService = {
     const data = await gql(`
       query GetWebsiteByUsername($filter: Website_bool_exp) {
         Website(where: $filter, limit: 1) {
-          ItemId
-          UserId
-          Username
-          IsPublished
-          Pages
-          Title
-          Description
-          HomePageId
+          ItemId UserId Username IsPublished Pages Title Description HomePageId
         }
       }
     `, { filter: { Username: { _eq: username } } }, true);
@@ -141,27 +119,19 @@ export const contentService = {
     };
   },
 
-  async saveSiteData(site: any): Promise<void> {
-    // Save to localStorage IMMEDIATELY - never lose data
+  async saveSiteData(site: any): Promise<any> {
+    // Save to localStorage IMMEDIATELY
     const siteToSave = { ...site };
     localStorage.setItem('vibe_site_' + site.user_id, JSON.stringify(siteToSave));
     localStorage.setItem('vibe_site_user_' + site.username, JSON.stringify(siteToSave));
-    console.log('[SAVE] Saved to localStorage:', site.user_id);
 
-    // Then try Selise API
     try {
       const pagesJson = JSON.stringify(site.pages);
       if (site.itemId) {
-        // UPDATE existing record using update_Website (returning block)
-        const data = await gql(`
+        await gql(`
           mutation UpdateWebsite($ItemId: String!, $changes: Website_set_input!) {
-            update_Website(
-              where: { ItemId: { _eq: $ItemId } }
-              _set: $changes
-            ) {
-              returning { 
-                ItemId 
-              }
+            update_Website(where: { ItemId: { _eq: $ItemId } }, _set: $changes) {
+              returning { ItemId }
             }
           }
         `, {
@@ -174,15 +144,10 @@ export const contentService = {
             HomePageId: site.homePageId || ''
           }
         });
-        console.log('[SAVE] Updated in Selise:', data);
       } else {
-        // CREATE new record using insert_Website_one
         const data = await gql(`
           mutation InsertWebsite($object: Website_insert_input!) {
-            insert_Website_one(object: $object) {
-              ItemId
-              UserId
-            }
+            insert_Website_one(object: $object) { ItemId UserId }
           }
         `, {
           object: {
@@ -194,21 +159,17 @@ export const contentService = {
             HomePageId: site.homePageId || ''
           }
         });
-        console.log('[SAVE] Created in Selise:', data);
         
-        // Store the ItemId for future updates
         if (data?.insert_Website_one?.ItemId) {
-          const updated = { 
-            ...siteToSave, 
-            itemId: data.insert_Website_one.ItemId 
-          };
-          localStorage.setItem('vibe_site_' + site.user_id, JSON.stringify(updated));
-          localStorage.setItem('vibe_site_user_' + site.username, JSON.stringify(updated));
+          siteToSave.itemId = data.insert_Website_one.ItemId;
+          localStorage.setItem('vibe_site_' + site.user_id, JSON.stringify(siteToSave));
+          localStorage.setItem('vibe_site_user_' + site.username, JSON.stringify(siteToSave));
         }
       }
+      return siteToSave;
     } catch (err) {
       console.error('[SAVE] Selise API failed:', err);
-      console.log('[SAVE] Data is safe in localStorage');
+      return siteToSave;
     }
   },
 
@@ -242,22 +203,14 @@ export const contentService = {
               id: 'h1',
               type: 'text',
               content: `Welcome to ${username}'s site`,
-              props: {
-                fontSize: '48px',
-                fontWeight: '800',
-                color: '#09090b',
-                marginBottom: '16px'
-              },
+              props: { fontSize: '48px', fontWeight: '800', color: '#09090b', marginBottom: '16px' },
               children: []
             },
             {
               id: 'sub',
               type: 'text', 
               content: 'Built with VibeBuilder',
-              props: {
-                fontSize: '20px',
-                color: '#71717a'
-              },
+              props: { fontSize: '20px', color: '#71717a' },
               children: []
             }
           ]
@@ -266,7 +219,6 @@ export const contentService = {
     };
   },
 
-  // Aliases for backward compatibility
   async getByUserId(userId: string) { return this.getSiteByUserId(userId); },
   async getByUsername(username: string) { return this.getSiteByUsername(username); },
   async create(site: any) { return this.saveSiteData(site); },
