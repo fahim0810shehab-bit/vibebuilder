@@ -77,15 +77,29 @@ function RenderNode({ node }: { node: VibeNode }) {
         return <p style={style}>{content}</p>;
       case 'image': {
         const imgSrc = src || props?.src || content || '';
-        if (!imgSrc) return null;
+        if (!imgSrc || imgSrc.startsWith('blob:')) {
+          return (
+            <div style={{
+              ...style,
+              backgroundColor: '#e4e4e7',
+              minHeight: '200px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#71717a'
+            }}>
+              Image
+            </div>
+          );
+        }
         return (
           <img
             src={imgSrc}
             alt={node.alt || props?.alt || ''}
-            style={{
-              ...style,
-              maxWidth: '100%',
-              display: 'block'
+            style={{ ...style, maxWidth: '100%', display: 'block' }}
+            onError={e => {
+              console.error('[PUBLIC] Image failed:', imgSrc);
+              (e.target as HTMLImageElement).style.display = 'none';
             }}
           />
         );

@@ -237,3 +237,23 @@ export const contentService = {
   async create(site: any) { return this.saveSiteData(site); },
   async update(id: string, site: any) { return this.saveSiteData({ ...site, itemId: id }); }
 };
+
+export async function testConnection(): Promise<void> {
+  console.log('[DGS TEST] Testing connection...');
+  console.log('[DGS TEST] URL:', GQL);
+  console.log('[DGS TEST] Key:', KEY?.substring(0, 10) + '...');
+  console.log('[DGS TEST] Token:', getAuthToken()?.substring(0, 20) + '...');
+
+  const result = await gql(`
+    query {
+      Website(limit: 1) {
+        ItemId
+        UserId
+        Username
+        IsPublished
+      }
+    }
+  `, {}, false);
+
+  console.log('[DGS TEST] Result:', JSON.stringify(result, null, 2));
+}

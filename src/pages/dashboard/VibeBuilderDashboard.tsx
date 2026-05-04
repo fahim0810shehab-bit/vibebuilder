@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/state/store/auth';
-import { contentService } from '@/services/contentService';
+import { contentService, testConnection } from '@/services/contentService';
 import { SiteData, VibePage } from '@/types/vibe';
 import { v4 as uuidv4 } from 'uuid';
 import { decodeJWT } from '@/lib/utils/decode-jwt-utils';
@@ -87,6 +87,7 @@ export default function VibeBuilderDashboard() {
   }, [userId, username]);
 
   useEffect(() => {
+    testConnection();
     loadSite();
   }, [loadSite]);
 
