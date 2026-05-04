@@ -16,10 +16,12 @@ function createNode(type: VibeNode['type']): VibeNode {
   const base = { id: uuidv4(), type, props: {}, children: [] };
   switch (type) {
     case 'hero':
-      return { ...base, props: { backgroundColor: '#6d28d9', padding: '80px 40px', textAlign: 'center' }, children: [
-        { id: uuidv4(), type: 'text', content: 'Your Headline Here', props: { fontSize: '3rem', fontWeight: '800', color: '#ffffff' }, children: [] },
-        { id: uuidv4(), type: 'text', content: 'A subtitle that describes your value proposition.', props: { fontSize: '1.125rem', color: '#ddd6fe', marginTop: '16px' }, children: [] },
-      ]};
+      return {
+        ...base, props: { backgroundColor: '#6d28d9', padding: '80px 40px', textAlign: 'center' }, children: [
+          { id: uuidv4(), type: 'text', content: 'Your Headline Here', props: { fontSize: '3rem', fontWeight: '800', color: '#ffffff' }, children: [] },
+          { id: uuidv4(), type: 'text', content: 'A subtitle that describes your value proposition.', props: { fontSize: '1.125rem', color: '#ddd6fe', marginTop: '16px' }, children: [] },
+        ]
+      };
     case 'section':
       return { ...base, props: { padding: '40px 20px', backgroundColor: '#f9fafb' } };
     case 'text':
@@ -37,56 +39,78 @@ function createNode(type: VibeNode['type']): VibeNode {
     case 'video':
       return { ...base, src: 'https://www.youtube.com/embed/dQw4w9WgXcQ', props: { width: '100%', height: '400px', borderRadius: '8px' } };
     case 'gallery':
-      return { ...base, props: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', padding: '20px' }, children: [
-        { id: uuidv4(), type: 'image', src: 'https://placehold.co/400x300?text=1', props: { width: '100%', borderRadius: '8px' }, children: [] },
-        { id: uuidv4(), type: 'image', src: 'https://placehold.co/400x300?text=2', props: { width: '100%', borderRadius: '8px' }, children: [] },
-        { id: uuidv4(), type: 'image', src: 'https://placehold.co/400x300?text=3', props: { width: '100%', borderRadius: '8px' }, children: [] },
-      ]};
+      return {
+        ...base, props: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', padding: '20px' }, children: [
+          { id: uuidv4(), type: 'image', src: 'https://placehold.co/400x300?text=1', props: { width: '100%', borderRadius: '8px' }, children: [] },
+          { id: uuidv4(), type: 'image', src: 'https://placehold.co/400x300?text=2', props: { width: '100%', borderRadius: '8px' }, children: [] },
+          { id: uuidv4(), type: 'image', src: 'https://placehold.co/400x300?text=3', props: { width: '100%', borderRadius: '8px' }, children: [] },
+        ]
+      };
     case 'testimonial':
-      return { ...base, props: { padding: '32px', backgroundColor: '#f3f4f6', borderRadius: '12px', textAlign: 'center' }, children: [
-        { id: uuidv4(), type: 'text', content: '"This product is amazing! Highly recommended."', props: { fontSize: '1.25rem', fontStyle: 'italic', color: '#374151' }, children: [] },
-        { id: uuidv4(), type: 'text', content: '- Jane Doe, CEO', props: { fontSize: '1rem', fontWeight: '600', color: '#111827', marginTop: '16px' }, children: [] },
-      ]};
+      return {
+        ...base, props: { padding: '32px', backgroundColor: '#f3f4f6', borderRadius: '12px', textAlign: 'center' }, children: [
+          { id: uuidv4(), type: 'text', content: '"This product is amazing! Highly recommended."', props: { fontSize: '1.25rem', fontStyle: 'italic', color: '#374151' }, children: [] },
+          { id: uuidv4(), type: 'text', content: '- Jane Doe, CEO', props: { fontSize: '1rem', fontWeight: '600', color: '#111827', marginTop: '16px' }, children: [] },
+        ]
+      };
     case 'social-links':
-      return { ...base, props: { display: 'flex', justifyContent: 'center', gap: '16px', padding: '16px' }, children: [
-        { id: uuidv4(), type: 'button', content: 'Twitter', href: '#', props: { padding: '8px 16px', backgroundColor: '#1DA1F2', color: '#fff', borderRadius: '4px', textDecoration: 'none' }, children: [] },
-        { id: uuidv4(), type: 'button', content: 'LinkedIn', href: '#', props: { padding: '8px 16px', backgroundColor: '#0A66C2', color: '#fff', borderRadius: '4px', textDecoration: 'none' }, children: [] },
-      ]};
+      return {
+        ...base, props: { display: 'flex', justifyContent: 'center', gap: '16px', padding: '16px' }, children: [
+          { id: uuidv4(), type: 'button', content: 'Twitter', href: '#', props: { padding: '8px 16px', backgroundColor: '#1DA1F2', color: '#fff', borderRadius: '4px', textDecoration: 'none' }, children: [] },
+          { id: uuidv4(), type: 'button', content: 'LinkedIn', href: '#', props: { padding: '8px 16px', backgroundColor: '#0A66C2', color: '#fff', borderRadius: '4px', textDecoration: 'none' }, children: [] },
+        ]
+      };
     case 'card':
-      return { ...base, props: { padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', gap: '12px' }, children: [
-        { id: uuidv4(), type: 'image', src: 'https://placehold.co/400x250', props: { width: '100%', borderRadius: '8px' }, children: [] },
-        { id: uuidv4(), type: 'text', content: 'Card Title', props: { fontSize: '1.5rem', fontWeight: '700', color: '#111827' }, children: [] },
-        { id: uuidv4(), type: 'text', content: 'Card description goes here.', props: { fontSize: '1rem', color: '#4b5563' }, children: [] },
-      ]};
+      return {
+        ...base, props: { padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', gap: '12px' }, children: [
+          { id: uuidv4(), type: 'image', src: 'https://placehold.co/400x250', props: { width: '100%', borderRadius: '8px' }, children: [] },
+          { id: uuidv4(), type: 'text', content: 'Card Title', props: { fontSize: '1.5rem', fontWeight: '700', color: '#111827' }, children: [] },
+          { id: uuidv4(), type: 'text', content: 'Card description goes here.', props: { fontSize: '1rem', color: '#4b5563' }, children: [] },
+        ]
+      };
     case 'two-columns':
-      return { ...base, props: { display: 'flex', flexDirection: 'row', gap: '24px', padding: '40px 20px' }, children: [
-        { id: uuidv4(), type: 'section', props: { flex: '1' }, children: [
-          { id: uuidv4(), type: 'text', content: 'Left Column', props: { fontSize: '1.5rem', fontWeight: 'bold' }, children: [] }
-        ]},
-        { id: uuidv4(), type: 'section', props: { flex: '1' }, children: [
-          { id: uuidv4(), type: 'text', content: 'Right Column', props: { fontSize: '1.5rem', fontWeight: 'bold' }, children: [] }
-        ]}
-      ]};
+      return {
+        ...base, props: { display: 'flex', flexDirection: 'row', gap: '24px', padding: '40px 20px' }, children: [
+          {
+            id: uuidv4(), type: 'section', props: { flex: '1' }, children: [
+              { id: uuidv4(), type: 'text', content: 'Left Column', props: { fontSize: '1.5rem', fontWeight: 'bold' }, children: [] }
+            ]
+          },
+          {
+            id: uuidv4(), type: 'section', props: { flex: '1' }, children: [
+              { id: uuidv4(), type: 'text', content: 'Right Column', props: { fontSize: '1.5rem', fontWeight: 'bold' }, children: [] }
+            ]
+          }
+        ]
+      };
     case 'navbar':
-      return { ...base, props: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', backgroundColor: '#ffffff', borderBottom: '1px solid #e5e7eb' }, children: [
-        { id: uuidv4(), type: 'text', content: 'MyBrand', props: { fontSize: '1.25rem', fontWeight: 'bold', color: '#6d28d9' }, children: [] },
-        { id: uuidv4(), type: 'section', props: { display: 'flex', gap: '16px' }, children: [
-          { id: uuidv4(), type: 'button', content: 'Home', href: '#', props: { backgroundColor: 'transparent', color: '#374151', padding: '0', textDecoration: 'none' }, children: [] },
-          { id: uuidv4(), type: 'button', content: 'About', href: '#', props: { backgroundColor: 'transparent', color: '#374151', padding: '0', textDecoration: 'none' }, children: [] },
-        ]}
-      ]};
+      return {
+        ...base, props: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', backgroundColor: '#ffffff', borderBottom: '1px solid #e5e7eb' }, children: [
+          { id: uuidv4(), type: 'text', content: 'MyBrand', props: { fontSize: '1.25rem', fontWeight: 'bold', color: '#6d28d9' }, children: [] },
+          {
+            id: uuidv4(), type: 'section', props: { display: 'flex', gap: '16px' }, children: [
+              { id: uuidv4(), type: 'button', content: 'Home', href: '#', props: { backgroundColor: 'transparent', color: '#374151', padding: '0', textDecoration: 'none' }, children: [] },
+              { id: uuidv4(), type: 'button', content: 'About', href: '#', props: { backgroundColor: 'transparent', color: '#374151', padding: '0', textDecoration: 'none' }, children: [] },
+            ]
+          }
+        ]
+      };
     case 'footer':
-      return { ...base, props: { padding: '40px 20px', backgroundColor: '#111827', color: '#ffffff', textAlign: 'center' }, children: [
-        { id: uuidv4(), type: 'text', content: '© 2026 MyBrand. All rights reserved.', props: { fontSize: '0.875rem', color: '#9ca3af' }, children: [] }
-      ]};
+      return {
+        ...base, props: { padding: '40px 20px', backgroundColor: '#111827', color: '#ffffff', textAlign: 'center' }, children: [
+          { id: uuidv4(), type: 'text', content: '© 2026 MyBrand. All rights reserved.', props: { fontSize: '0.875rem', color: '#9ca3af' }, children: [] }
+        ]
+      };
     case 'container':
       return { ...base, props: { maxWidth: '1200px', margin: '0 auto', padding: '20px' } };
     case 'three-columns':
-      return { ...base, props: { display: 'flex', gap: '24px', padding: '40px 20px' }, children: [
-        { id: uuidv4(), type: 'section', props: { flex: '1' }, children: [] },
-        { id: uuidv4(), type: 'section', props: { flex: '1' }, children: [] },
-        { id: uuidv4(), type: 'section', props: { flex: '1' }, children: [] }
-      ]};
+      return {
+        ...base, props: { display: 'flex', gap: '24px', padding: '40px 20px' }, children: [
+          { id: uuidv4(), type: 'section', props: { flex: '1' }, children: [] },
+          { id: uuidv4(), type: 'section', props: { flex: '1' }, children: [] },
+          { id: uuidv4(), type: 'section', props: { flex: '1' }, children: [] }
+        ]
+      };
     case 'heading':
       return { ...base, content: 'Headline Title', props: { fontSize: '2.5rem', fontWeight: '800', color: 'inherit', marginBottom: '16px' } };
     case 'paragraph':
@@ -94,17 +118,21 @@ function createNode(type: VibeNode['type']): VibeNode {
     case 'icon':
       return { ...base, props: { fontSize: '24px', color: '#6d28d9' }, content: 'star' };
     case 'feature':
-      return { ...base, props: { padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', textAlign: 'center' }, children: [
-        { id: uuidv4(), type: 'icon', props: { fontSize: '32px', marginBottom: '16px' }, content: 'zap', children: [] },
-        { id: uuidv4(), type: 'heading', props: { fontSize: '1.25rem', fontWeight: 'bold' }, content: 'Feature Name', children: [] },
-        { id: uuidv4(), type: 'paragraph', props: { fontSize: '0.875rem' }, content: 'Description of the feature goes here.', children: [] },
-      ]};
+      return {
+        ...base, props: { padding: '24px', backgroundColor: '#ffffff', borderRadius: '12px', textAlign: 'center' }, children: [
+          { id: uuidv4(), type: 'icon', props: { fontSize: '32px', marginBottom: '16px' }, content: 'zap', children: [] },
+          { id: uuidv4(), type: 'heading', props: { fontSize: '1.25rem', fontWeight: 'bold' }, content: 'Feature Name', children: [] },
+          { id: uuidv4(), type: 'paragraph', props: { fontSize: '0.875rem' }, content: 'Description of the feature goes here.', children: [] },
+        ]
+      };
     case 'pricing':
-      return { ...base, props: { padding: '32px', backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #e5e7eb', textAlign: 'center' }, children: [
-        { id: uuidv4(), type: 'text', props: { fontSize: '0.875rem', fontWeight: 'bold', color: '#6d28d9' }, content: 'PRO PLAN', children: [] },
-        { id: uuidv4(), type: 'heading', props: { fontSize: '3rem', fontWeight: '900' }, content: '$29', children: [] },
-        { id: uuidv4(), type: 'button', props: { width: '100%', marginTop: '24px' }, content: 'Get Started', children: [] },
-      ]};
+      return {
+        ...base, props: { padding: '32px', backgroundColor: '#ffffff', borderRadius: '16px', border: '1px solid #e5e7eb', textAlign: 'center' }, children: [
+          { id: uuidv4(), type: 'text', props: { fontSize: '0.875rem', fontWeight: 'bold', color: '#6d28d9' }, content: 'PRO PLAN', children: [] },
+          { id: uuidv4(), type: 'heading', props: { fontSize: '3rem', fontWeight: '900' }, content: '$29', children: [] },
+          { id: uuidv4(), type: 'button', props: { width: '100%', marginTop: '24px' }, content: 'Get Started', children: [] },
+        ]
+      };
     default:
       return base;
   }
@@ -135,9 +163,8 @@ const CanvasNode = ({ node, onUpdate, onDelete, onCopy, selectedId, setSelectedI
     </div>
   );
 
-  const wrapperClass = `group relative cursor-pointer transition-all rounded ${
-    isSelected ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : 'hover:ring-1 hover:ring-border'
-  }`;
+  const wrapperClass = `group relative cursor-pointer transition-all rounded ${isSelected ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : 'hover:ring-1 hover:ring-border'
+    }`;
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -307,7 +334,7 @@ const SortableCanvasNode = React.memo(function SortableCanvasNode(props: any) {
 // ─── Inspector ────────────────────────────────────────────────────────────────
 function Inspector({ node, onChange, onImageUpload }: { node: VibeNode; onChange: (key: string, value: any) => void; onImageUpload: (file: File) => void }) {
   const [tab, setTab] = useState<'style' | 'animation'>('style');
-  
+
   const fields: { label: string; key: string; type?: string; options?: string[] }[] = [
     { label: 'Content', key: 'content' },
     { label: 'Link URL', key: 'href' },
@@ -361,61 +388,61 @@ function Inspector({ node, onChange, onImageUpload }: { node: VibeNode; onChange
             <span className="text-[10px] font-bold text-primary uppercase">{node.type}</span>
           </div>
 
-      {node.type === 'image' && (
-        <div>
-          <label className="block text-xs text-muted-foreground mb-1 font-medium">Image Source URL</label>
-          <input
-            type="text"
-            value={node.src ?? ''}
-            onChange={(e) => onChange('src', e.target.value)}
-            placeholder="https://..."
-            className="w-full bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
-          />
-          <label className="mt-2 flex items-center gap-2 cursor-pointer">
-            <span className="text-xs bg-primary hover:bg-primary/90 text-primary-foreground px-3 py-1.5 rounded-lg transition-colors font-medium">Upload Image</span>
-            <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) onImageUpload(f);
-            }} />
-          </label>
-        </div>
-      )}
+          {node.type === 'image' && (
+            <div>
+              <label className="block text-xs text-muted-foreground mb-1 font-medium">Image Source URL</label>
+              <input
+                type="text"
+                value={node.src ?? ''}
+                onChange={(e) => onChange('src', e.target.value)}
+                placeholder="https://..."
+                className="w-full bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+              />
+              <label className="mt-2 flex items-center gap-2 cursor-pointer">
+                <span className="text-xs bg-primary hover:bg-primary/90 text-primary-foreground px-3 py-1.5 rounded-lg transition-colors font-medium">Upload Image</span>
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) onImageUpload(f);
+                }} />
+              </label>
+            </div>
+          )}
 
-      {fields.map(({ label, key, type }) => {
-        if (key === 'content' && !['text', 'button'].includes(node.type)) return null;
-        const value = key === 'content' ? (node.content ?? '') : (node.props[key] ?? '');
-        return (
-          <div key={key}>
-            <label className="block text-[11px] text-muted-foreground mb-1 font-medium">{label}</label>
-            {type === 'color' ? (
-              <div className="flex items-center gap-2">
-                <input type="color" value={value || '#000000'} onChange={(e) => onChange(key, e.target.value)}
-                  className="w-8 h-8 rounded cursor-pointer bg-transparent border-0" />
-                <input type="text" value={value} onChange={(e) => onChange(key, e.target.value)}
-                  className="flex-1 bg-card border border-border rounded-lg px-2 py-1.5 text-xs text-foreground outline-none focus:border-primary" />
+          {fields.map(({ label, key, type }) => {
+            if (key === 'content' && !['text', 'button'].includes(node.type)) return null;
+            const value = key === 'content' ? (node.content ?? '') : (node.props[key] ?? '');
+            return (
+              <div key={key}>
+                <label className="block text-[11px] text-muted-foreground mb-1 font-medium">{label}</label>
+                {type === 'color' ? (
+                  <div className="flex items-center gap-2">
+                    <input type="color" value={value || '#000000'} onChange={(e) => onChange(key, e.target.value)}
+                      className="w-8 h-8 rounded cursor-pointer bg-transparent border-0" />
+                    <input type="text" value={value} onChange={(e) => onChange(key, e.target.value)}
+                      className="flex-1 bg-card border border-border rounded-lg px-2 py-1.5 text-xs text-foreground outline-none focus:border-primary" />
+                  </div>
+                ) : type === 'select' ? (
+                  <select value={value} onChange={(e) => onChange(key, e.target.value)}
+                    className="w-full bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground outline-none focus:border-primary">
+                    <option value="">Default</option>
+                    {fields.find(f => f.key === key)?.options?.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input type="text" value={value} onChange={(e) => onChange(key, e.target.value)}
+                    className="w-full bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground outline-none focus:border-primary" />
+                )}
               </div>
-            ) : type === 'select' ? (
-              <select value={value} onChange={(e) => onChange(key, e.target.value)}
-                className="w-full bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground outline-none focus:border-primary">
-                <option value="">Default</option>
-                {fields.find(f => f.key === key)?.options?.map(opt => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
-            ) : (
-              <input type="text" value={value} onChange={(e) => onChange(key, e.target.value)}
-                className="w-full bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground outline-none focus:border-primary" />
-            )}
-          </div>
-        );
-      })}
+            );
+          })}
         </>
       ) : (
         <div className="space-y-4">
           <div>
             <label className="block text-[11px] text-muted-foreground mb-1 font-medium">Entrance Animation</label>
-            <select 
-              value={node.animation?.type || 'none'} 
+            <select
+              value={node.animation?.type || 'none'}
               onChange={(e) => handleAnimationChange('type', e.target.value)}
               className="w-full bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
             >
@@ -430,8 +457,8 @@ function Inspector({ node, onChange, onImageUpload }: { node: VibeNode; onChange
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] text-muted-foreground mb-1 font-medium">Duration</label>
-              <select 
-                value={node.animation?.duration || '0.5s'} 
+              <select
+                value={node.animation?.duration || '0.5s'}
                 onChange={(e) => handleAnimationChange('duration', e.target.value)}
                 className="w-full bg-card border border-border rounded-lg px-2 py-1.5 text-xs text-foreground outline-none focus:border-primary"
               >
@@ -443,8 +470,8 @@ function Inspector({ node, onChange, onImageUpload }: { node: VibeNode; onChange
             </div>
             <div>
               <label className="block text-[11px] text-muted-foreground mb-1 font-medium">Delay</label>
-              <select 
-                value={node.animation?.delay || '0s'} 
+              <select
+                value={node.animation?.delay || '0s'}
                 onChange={(e) => handleAnimationChange('delay', e.target.value)}
                 className="w-full bg-card border border-border rounded-lg px-2 py-1.5 text-xs text-foreground outline-none focus:border-primary"
               >
@@ -535,7 +562,7 @@ export default function VibeBuilderEditor() {
   // Load site & page
   useEffect(() => {
     if (!userId || !pageId) return;
-    
+
     const loadSite = async () => {
       setLoading(true);
       setError(null);
@@ -670,7 +697,11 @@ export default function VibeBuilderEditor() {
     if (!selectedId) return;
     setStatus('Uploading...');
     const url = await mediaService.uploadImage(file);
-    const updated = nodes.map((n) => n.id === selectedId ? { ...n, src: url } : n);
+    const updated = nodes.map((n) => n.id === selectedId ? { 
+      ...n, 
+      src: url,
+      props: { ...n.props, src: url }
+    } : n);
     updateNodes(updated);
     // Explicitly trigger a save after image upload to ensure draft is updated
     setTimeout(save, 500);
@@ -724,7 +755,7 @@ export default function VibeBuilderEditor() {
       // Even if API fails, saveSiteData handled localStorage fallback
       setSite(updatedSite);
       setPage(updatedPage);
-      setStatus('Saved ✓'); 
+      setStatus('Saved ✓');
     } finally {
       setSaving(false);
       setTimeout(() => setStatus(''), 2000);
@@ -848,11 +879,10 @@ export default function VibeBuilderEditor() {
         <div className="flex items-center gap-2">
           {status && (
             <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted/50 border border-border">
-              <div className={`w-1.5 h-1.5 rounded-full ${
-                status.includes('Saved') ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' :
-                status.includes('Saving') ? 'bg-blue-500 animate-pulse' :
-                status.includes('Unsaved') ? 'bg-yellow-500' : 'bg-red-500'
-              }`} />
+              <div className={`w-1.5 h-1.5 rounded-full ${status.includes('Saved') ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' :
+                  status.includes('Saving') ? 'bg-blue-500 animate-pulse' :
+                    status.includes('Unsaved') ? 'bg-yellow-500' : 'bg-red-500'
+                }`} />
               <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">{status}</span>
             </div>
           )}
@@ -885,14 +915,14 @@ export default function VibeBuilderEditor() {
 
       <div className="flex flex-1 overflow-hidden">
         <div className="w-14 bg-background border-r border-border flex flex-col items-center py-4 gap-4 shrink-0">
-          <button 
+          <button
             onClick={() => setLeftTab('components')}
             className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${leftTab === 'components' ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20' : 'text-muted-foreground hover:bg-muted'}`}
             title="Components"
           >
             <span className="text-lg">⊕</span>
           </button>
-          <button 
+          <button
             onClick={() => setLeftTab('styles')}
             className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${leftTab === 'styles' ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20' : 'text-muted-foreground hover:bg-muted'}`}
             title="Site Styles"
@@ -907,15 +937,15 @@ export default function VibeBuilderEditor() {
               <div className="p-4 border-b border-border bg-background/50 sticky top-0 z-10">
                 <h2 className="text-xs font-bold text-foreground uppercase tracking-widest">Library</h2>
               </div>
-              
+
               <div className="p-2 space-y-4">
                 {CATEGORIES.map((cat) => (
                   <div key={cat.name} className="space-y-1">
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wider px-2 py-1 font-bold">{cat.name}</p>
                     <div className="grid grid-cols-1 gap-1">
                       {cat.types.map((type) => (
-                        <button 
-                          key={type} 
+                        <button
+                          key={type}
                           onClick={() => addNode(type as any)}
                           className="group w-full text-left px-3 py-2 rounded-lg hover:bg-primary/10 border border-transparent hover:border-primary/20 transition-all flex items-center justify-between"
                         >
@@ -950,9 +980,9 @@ export default function VibeBuilderEditor() {
                   ].map((c) => (
                     <div key={c.key} className="flex items-center justify-between">
                       <span className="text-[11px] text-foreground">{c.label}</span>
-                      <input 
-                        type="color" 
-                        value={(site?.theme as any)?.[c.key] || '#000000'} 
+                      <input
+                        type="color"
+                        value={(site?.theme as any)?.[c.key] || '#000000'}
                         onChange={(e) => handleThemeChange(c.key, e.target.value)}
                         className="w-6 h-6 rounded cursor-pointer bg-transparent border-0"
                       />
@@ -964,8 +994,8 @@ export default function VibeBuilderEditor() {
                   <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Typography</p>
                   <div>
                     <label className="text-[10px] text-muted-foreground block mb-1">Body Font</label>
-                    <select 
-                      value={site?.theme?.font || 'Inter'} 
+                    <select
+                      value={site?.theme?.font || 'Inter'}
                       onChange={(e) => handleThemeChange('font', e.target.value)}
                       className="w-full bg-background border border-border rounded px-2 py-1 text-xs outline-none"
                     >
@@ -976,8 +1006,8 @@ export default function VibeBuilderEditor() {
                   </div>
                   <div>
                     <label className="text-[10px] text-muted-foreground block mb-1">Heading Font</label>
-                    <select 
-                      value={site?.theme?.headingFont || 'Inter'} 
+                    <select
+                      value={site?.theme?.headingFont || 'Inter'}
                       onChange={(e) => handleThemeChange('headingFont', e.target.value)}
                       className="w-full bg-background border border-border rounded px-2 py-1 text-xs outline-none"
                     >
@@ -996,9 +1026,9 @@ export default function VibeBuilderEditor() {
           className="flex-1 overflow-y-auto bg-muted/30 relative flex justify-center p-4"
           onClick={() => setSelectedId(null)}
         >
-          <div 
-            className="min-h-full bg-background shadow-2xl transition-all duration-300 overflow-x-hidden" 
-            style={{ 
+          <div
+            className="min-h-full bg-background shadow-2xl transition-all duration-300 overflow-x-hidden"
+            style={{
               width: viewport === 'desktop' ? '100%' : viewport === 'tablet' ? '768px' : '375px',
               maxWidth: '100%',
               ['--vibe-primary' as any]: site?.theme?.primary || '#7c3aed',

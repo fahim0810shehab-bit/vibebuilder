@@ -42,67 +42,73 @@ async function gql(query: string, variables: any, pub = false) {
     });
     const json = await res.json();
     if (json.errors) {
-      console.warn('[DGS Error]', json.errors);
+      console.error('[DGS GraphQL Errors]', JSON.stringify(json.errors, null, 2));
+      return { errors: json.errors };
     }
-    return json.data;
+    return { data: json.data };
   } catch (err) {
-    console.error('[DGS Failed]', err);
-    return null;
+    console.error('[DGS Network/Fetch Failed]', err);
+    return { errors: [err] };
   }
 }
 
 export const contentService = {
   async getSiteByUserId(userId: string): Promise<any> {
     const localKey = 'vibe_site_' + userId;
-    const localData = localStorage.getItem(localKey) || localStorage.getItem('vibe_' + userId);
+    const localData = localStorage.getItem(localKey);
     
-    try {
-      const data = await gql(`
-        query GetWebsiteByUserId($filter: Website_bool_exp) {
-          Website(where: $filter, limit: 1) {
-            ItemId UserId Username IsPublished Pages Title Description HomePageId
-          }
+    const { data, errors } = await gql(`
+      query GetWebsiteByUserId($filter: Website_bool_exp) {
+        Website(where: $filter, limit: 1) {
+          ItemId UserId Username IsPublished Pages Title Description HomePageId LastUpdatedDate
         }
-      `, { filter: { UserId: { _eq: userId } } });
+      }
+    `, { filter: { UserId: { _eq: userId } } });
 
-      const record = data?.Website?.[0];
-      if (record) {
-        const site = {
-          itemId: record.ItemId,
-          user_id: record.UserId,
-          username: record.Username,
-          is_published: record.IsPublished,
-          title: record.Title || '',
-          homePageId: record.HomePageId || '',
-          pages: (() => {
-            try { return JSON.parse(record.Pages || '[]'); }
-            catch { return []; }
-          })()
-        };
+    const record = data?.Website?.[0];
+    if (record) {
+      const site = {
+        itemId: record.ItemId,
+        user_id: record.UserId,
+        username: record.Username,
+        is_published: record.IsPublished,
+        title: record.Title || '',
+        description: record.Description || '',
+        homePageId: record.HomePageId || '',
+        pages: (() => {
+          try { return JSON.parse(record.Pages || '[]'); }
+          catch { return []; }
+        })()
+      };
+      
+      // Merge Strategy: Only overwrite localStorage if API has actual pages
+      // This prevents "Silent Overwrite" where a failed/empty API load wipes local draft
+      if (site.pages.length > 0) {
         localStorage.setItem(localKey, JSON.stringify(site));
         localStorage.setItem('vibe_site_user_' + site.username, JSON.stringify(site));
-        return site;
       }
-    } catch (err) {
-      console.warn('[LOAD] Selise failed, using localStorage', err);
+      return site;
     }
 
-    if (localData) return JSON.parse(localData);
+    if (localData) {
+      console.log('[LOAD] Using cached LocalStorage data for:', userId);
+      return JSON.parse(localData);
+    }
     return null;
   },
 
   async getSiteByUsername(username: string, isPublic = true): Promise<any | null> {
-    const data = await gql(`
+    const { data } = await gql(`
       query GetWebsiteByUsername($filter: Website_bool_exp) {
         Website(where: $filter, limit: 1) {
-          ItemId UserId Username IsPublished Pages Title Description HomePageId
+          ItemId UserId Username IsPublished Pages Title Description HomePageId LastUpdatedDate
         }
       }
     `, { filter: { Username: { _eq: username } } }, isPublic);
 
     const record = data?.Website?.[0];
     if (!record) {
-      const local = localStorage.getItem('vibe_site_user_' + username) || localStorage.getItem('vibe_user_' + username);
+      const local = localStorage.getItem('vibe_site_user_' + username);
       return local ? JSON.parse(local) : null;
     }
 
@@ -112,6 +118,7 @@ export const contentService = {
       username: record.Username,
       is_published: record.IsPublished,
       title: record.Title || '',
+      description: record.Description || '',
       pages: (() => {
         try { return JSON.parse(record.Pages || '[]'); }
         catch { return []; }
@@ -120,57 +127,63 @@ export const contentService = {
   },
 
   async saveSiteData(site: any): Promise<any> {
-    // Save to localStorage IMMEDIATELY
     const siteToSave = { ...site };
+    const pagesJson = JSON.stringify(site.pages);
+    
+    // 1. Immediate Local Save
     localStorage.setItem('vibe_site_' + site.user_id, JSON.stringify(siteToSave));
     localStorage.setItem('vibe_site_user_' + site.username, JSON.stringify(siteToSave));
 
-    try {
-      const pagesJson = JSON.stringify(site.pages);
-      if (site.itemId) {
-        await gql(`
-          mutation UpdateWebsite($ItemId: String!, $changes: Website_set_input!) {
-            update_Website(where: { ItemId: { _eq: $ItemId } }, _set: $changes) {
-              returning { ItemId }
-            }
+    // 2. Remote Save
+    if (site.itemId) {
+      const { data, errors } = await gql(`
+        mutation UpdateWebsite($ItemId: String!, $changes: Website_set_input!) {
+          update_Website(where: { ItemId: { _eq: $ItemId } }, _set: $changes) {
+            returning { ItemId }
           }
-        `, {
-          ItemId: site.itemId,
-          changes: {
-            IsPublished: site.is_published ?? false,
-            Pages: pagesJson,
-            Username: site.username,
-            Title: site.title || '',
-            HomePageId: site.homePageId || ''
-          }
-        });
-      } else {
-        const data = await gql(`
-          mutation InsertWebsite($object: Website_insert_input!) {
-            insert_Website_one(object: $object) { ItemId UserId }
-          }
-        `, {
-          object: {
-            UserId: site.user_id,
-            Username: site.username,
-            IsPublished: site.is_published ?? false,
-            Pages: pagesJson,
-            Title: site.title || '',
-            HomePageId: site.homePageId || ''
-          }
-        });
-        
-        if (data?.insert_Website_one?.ItemId) {
-          siteToSave.itemId = data.insert_Website_one.ItemId;
-          localStorage.setItem('vibe_site_' + site.user_id, JSON.stringify(siteToSave));
-          localStorage.setItem('vibe_site_user_' + site.username, JSON.stringify(siteToSave));
         }
+      `, {
+        ItemId: site.itemId,
+        changes: {
+          IsPublished: site.is_published ?? false,
+          Pages: pagesJson,
+          Username: site.username,
+          Title: site.title || '',
+          Description: site.description || '',
+          HomePageId: site.homePageId || ''
+        }
+      });
+      
+      if (errors) {
+        console.warn('[SAVE] Remote update failed, but draft is safe in localStorage');
+      } else {
+        console.log('[SAVE] Remote update success');
       }
-      return siteToSave;
-    } catch (err) {
-      console.error('[SAVE] Selise API failed:', err);
-      return siteToSave;
+    } else {
+      const { data, errors } = await gql(`
+        mutation InsertWebsite($object: Website_insert_input!) {
+          insert_Website_one(object: $object) { ItemId UserId }
+        }
+      `, {
+        object: {
+          UserId: site.user_id,
+          Username: site.username,
+          IsPublished: site.is_published ?? false,
+          Pages: pagesJson,
+          Title: site.title || '',
+          Description: site.description || '',
+          HomePageId: site.homePageId || ''
+        }
+      });
+      
+      if (data?.insert_Website_one?.ItemId) {
+        siteToSave.itemId = data.insert_Website_one.ItemId;
+        localStorage.setItem('vibe_site_' + site.user_id, JSON.stringify(siteToSave));
+        localStorage.setItem('vibe_site_user_' + site.username, JSON.stringify(siteToSave));
+        console.log('[SAVE] Remote create success. ItemId:', siteToSave.itemId);
+      }
     }
+    return siteToSave;
   },
 
   createDefault(userId: string, username: string): any {
@@ -179,7 +192,7 @@ export const contentService = {
       username,
       is_published: false,
       title: `${username}'s Website`,
-      description: '',
+      description: 'Created with VibeBuilder',
       homePageId: 'home',
       pages: [{
         id: 'home',
@@ -201,15 +214,15 @@ export const contentService = {
           children: [
             {
               id: 'h1',
-              type: 'text',
+              type: 'heading',
               content: `Welcome to ${username}'s site`,
               props: { fontSize: '48px', fontWeight: '800', color: '#09090b', marginBottom: '16px' },
               children: []
             },
             {
               id: 'sub',
-              type: 'text', 
-              content: 'Built with VibeBuilder',
+              type: 'paragraph', 
+              content: 'Click here to start editing your dream website.',
               props: { fontSize: '20px', color: '#71717a' },
               children: []
             }

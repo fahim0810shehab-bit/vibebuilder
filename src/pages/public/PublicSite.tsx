@@ -75,8 +75,21 @@ function RenderNode({ node }: { node: VibeNode }) {
       case 'paragraph':
       case 'text':
         return <p style={style}>{content}</p>;
-      case 'image':
-        return <img src={src} style={style} alt={node.alt ?? ''} />;
+      case 'image': {
+        const imgSrc = src || props?.src || content || '';
+        if (!imgSrc) return null;
+        return (
+          <img
+            src={imgSrc}
+            alt={node.alt || props?.alt || ''}
+            style={{
+              ...style,
+              maxWidth: '100%',
+              display: 'block'
+            }}
+          />
+        );
+      }
       case 'video':
         return (
           <iframe
@@ -197,14 +210,21 @@ export default function PublicSite() {
 
   return (
     <div 
-      className="min-h-screen flex flex-col bg-white"
       style={{
+        all: 'unset',
+        display: 'flex',
+        flexDirection: 'column',
+        width: '100vw',
+        minHeight: '100vh',
+        margin: 0,
+        padding: 0,
+        fontFamily: site?.theme?.font || 'inherit',
+        backgroundColor: site?.theme?.bg || '#ffffff',
         ['--vibe-primary' as any]: site?.theme?.primary || '#7c3aed',
         ['--vibe-secondary' as any]: site?.theme?.secondary || '#06b6d4',
         ['--vibe-accent' as any]: site?.theme?.accent || '#f59e0b',
         ['--vibe-bg' as any]: site?.theme?.bg || '#ffffff',
-        ['--vibe-text' as any]: site?.theme?.text || '#09090b',
-        fontFamily: site?.theme?.font || 'Inter, sans-serif'
+        ['--vibe-text' as any]: site?.theme?.text || '#09090b'
       }}
     >
       <title>{activePage.seo?.title || `${site.username} - ${activePage.name}`}</title>

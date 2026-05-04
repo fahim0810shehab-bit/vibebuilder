@@ -9,19 +9,20 @@ export const mediaService = {
     const token = getAuthToken();
 
     try {
+      console.log('[mediaService] Requesting pre-signed URL for:', file.name);
+      
       // Step 1 — get presigned URL
-      // We try with SLUG first as projectKey, fallback to KEY if needed
       const presignRes = await fetch(`${BASE}/uds/v1/Files/GetPreSignedUrlForUpload`, {
         method: 'POST',
         headers: {
           'x-blocks-key': KEY,
-          Authorization: `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           name: file.name,
-          projectKey: SLUG || KEY,
-          moduleName: 8,
+          projectKey: SLUG, // Selise UDS usually expects the project slug
+          moduleName: 8,    // 8 is standard for Content/Website modules
           accessModifier: 'Public',
           contentType: file.type,
         }),
@@ -29,17 +30,20 @@ export const mediaService = {
 
       if (!presignRes.ok) {
         const errText = await presignRes.text();
-        console.warn('[mediaService] Presign failed with status:', presignRes.status, errText);
-        throw new Error(`Presign failed: HTTP ${presignRes.status}`);
+        console.error('[mediaService] UDS Presign Failed:', presignRes.status, errText);
+        throw new Error(`UDS Presign Failed: ${presignRes.status}`);
       }
 
       const presignJson = await presignRes.json();
-      const uploadUrl: string = presignJson?.uploadUrl || presignJson?.data?.uploadUrl;
+      // Handle various response structures from different Selise versions
+      const uploadUrl: string = presignJson?.uploadUrl || presignJson?.data?.uploadUrl || presignJson?.preSignedUrl;
 
       if (!uploadUrl) {
-        console.warn('[mediaService] No uploadUrl in response:', presignJson);
-        throw new Error('No uploadUrl in response');
+        console.error('[mediaService] Invalid UDS response format:', presignJson);
+        throw new Error('No uploadUrl in UDS response');
       }
+
+      console.log('[mediaService] Uploading binary to Azure...');
 
       // Step 2 — upload binary to Azure
       const uploadRes = await fetch(uploadUrl, {
@@ -51,15 +55,20 @@ export const mediaService = {
         body: file,
       });
 
-      if (!uploadRes.ok) throw new Error(`Azure upload failed: HTTP ${uploadRes.status}`);
+      if (!uploadRes.ok) {
+        const errText = await uploadRes.text();
+        console.error('[mediaService] Azure Upload Failed:', uploadRes.status, errText);
+        throw new Error(`Azure Upload Failed: ${uploadRes.status}`);
+      }
 
       // Step 3 — return permanent URL (strip SAS query string)
       const finalUrl = uploadUrl.split('?')[0];
-      console.log('[mediaService] Upload success:', finalUrl);
+      console.log('[mediaService] Upload Success:', finalUrl);
       return finalUrl;
     } catch (err) {
-      console.warn('[mediaService] Upload failed, returning object URL as fallback', err);
-      // Fallback to object URL so user sees the image locally at least
+      console.error('[mediaService] CRITICAL UDS ERROR:', err);
+      // We return an object URL as a last-resort fallback so the user sees their image 
+      // during the current session, even if it won't persist on reload.
       return URL.createObjectURL(file);
     }
   },

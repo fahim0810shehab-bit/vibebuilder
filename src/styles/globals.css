@@ -19,12 +19,15 @@ html.dark {
 
   /* Hide scrollbars for webkit browsers */
   .scrollbar-hide {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
   }
 
   .scrollbar-hide::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Opera */
+    display: none;
+    /* Chrome, Safari, Opera */
   }
 
   /* Help the user select text in the button, need this for the uilm extension edge cases */
@@ -40,6 +43,7 @@ html.dark {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -71,9 +75,11 @@ html.dark {
     -webkit-appearance: none;
     appearance: none;
   }
+
   input[type='time']::-webkit-calendar-picker-indicator {
     display: none !important;
   }
+
   input[type='time']::-moz-calendar-picker-indicator {
     display: none !important;
   }
@@ -370,6 +376,7 @@ html.dark {
 .ql-toolbar {
   @apply rounded-t-md border border-gray-200;
 }
+
 .ql-container {
   @apply rounded-b-md border border-gray-200;
 }

@@ -55,7 +55,8 @@ export const AppRoutes = () => {
             </Route>
 
             {/* Public Routes */}
-            <Route path="/site/:username/:pageSlug?" element={<PublicSite />} />
+            <Route path="/site/:username" element={<PublicSite />} />
+            <Route path="/site/:username/:pageSlug" element={<PublicSite />} />
 
             {/* Redirects */}
             <Route path="/" element={<Navigate to="/vibebuilder" />} />
