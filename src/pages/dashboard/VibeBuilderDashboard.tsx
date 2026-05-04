@@ -194,10 +194,10 @@ export default function VibeBuilderDashboard() {
 
   if (loading) {
     return (
-      <div className="w-full min-h-screen bg-gray-950 flex items-center justify-center">
+      <div className="w-full min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-4 border-violet-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-gray-400 text-sm">Loading site...</p>
+          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-muted-foreground text-sm">Loading site...</p>
         </div>
       </div>
     );
@@ -205,10 +205,10 @@ export default function VibeBuilderDashboard() {
 
   if (error && !site) {
     return (
-      <div className="w-full min-h-screen bg-gray-950 flex flex-col items-center justify-center p-6 text-center">
-        <h2 className="text-2xl font-bold text-white mb-2">Something went wrong</h2>
-        <p className="text-red-400 mb-6">{error}</p>
-        <button onClick={loadSite} className="px-6 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg">
+      <div className="w-full min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center">
+        <h2 className="text-2xl font-bold text-foreground mb-2">Something went wrong</h2>
+        <p className="text-destructive mb-6">{error}</p>
+        <button onClick={loadSite} className="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg">
           Try Again
         </button>
       </div>
@@ -216,40 +216,40 @@ export default function VibeBuilderDashboard() {
   }
 
   return (
-    <div className="w-full min-h-screen bg-gray-950 text-white" style={{ fontFamily: 'Inter, sans-serif' }}>
+    <div className="w-full min-h-screen bg-background text-foreground" style={{ fontFamily: 'Inter, sans-serif' }}>
       {/* ── Premium Topbar ── */}
-      <header className="h-14 border-b border-gray-800 bg-gray-900/90 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between px-6">
+      <header className="h-14 border-b border-border bg-card/90 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between px-6">
         {/* Left: Brand */}
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-900/40">
-            <span className="text-white font-bold text-xs">VB</span>
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/40">
+            <span className="text-primary-foreground font-bold text-xs">VB</span>
           </div>
-          <span className="text-white font-bold text-base tracking-tight">VibeBuilder</span>
-          <span className="hidden sm:block text-gray-600 text-xs ml-1">/ Dashboard</span>
+          <span className="text-foreground font-bold text-base tracking-tight">VibeBuilder</span>
+          <span className="hidden sm:block text-muted-foreground text-xs ml-1">/ Dashboard</span>
         </div>
 
         {/* Right: Controls */}
         <div className="flex items-center gap-1">
           <ThemeSwitcher />
           <LanguageSelector />
-          <div className="w-px h-5 bg-gray-700 mx-1" />
+          <div className="w-px h-5 bg-border mx-1" />
           <ProfileMenu />
         </div>
       </header>
 
       {/* Gradient background glow */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-violet-600/10 rounded-full blur-3xl" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/5 rounded-full blur-3xl" />
       </div>
 
       <main className="relative z-10 max-w-5xl mx-auto px-6 py-10 space-y-8">
         {/* Welcome hero strip */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-extrabold text-white tracking-tight">
-              Welcome back, <span className="text-violet-400">{user?.firstName ?? username}</span> 👋
+            <h1 className="text-3xl font-extrabold text-foreground tracking-tight">
+              Welcome back, <span className="text-primary">{user?.firstName ?? username}</span> 👋
             </h1>
-            <p className="text-gray-500 text-sm mt-1">Manage your website, pages and publishing settings.</p>
+            <p className="text-muted-foreground text-sm mt-1">Manage your website, pages and publishing settings.</p>
           </div>
         </div>
 
@@ -261,22 +261,22 @@ export default function VibeBuilderDashboard() {
         )}
 
         {/* Site Info Card */}
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 space-y-4">
+        <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Site Information</p>
-              <h2 className="text-2xl font-bold text-white">@{site?.username}</h2>
+              <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Site Information</p>
+              <h2 className="text-2xl font-bold text-foreground">@{site?.username}</h2>
               <div className="flex items-center gap-2 mt-1">
                 <a
                   href={`/site/${site?.username}/home`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-violet-400 hover:text-violet-300 text-sm transition-colors inline-block"
+                  className="text-primary hover:text-primary/80 text-sm transition-colors inline-block"
                 >
                   {window.location.origin}/site/{site?.username}/home ↗
                 </a>
                 <button onClick={() => copyUrl(`${window.location.origin}/site/${site?.username}/home`)}
-                  className="text-gray-400 hover:text-white text-xs px-2 py-1 bg-gray-800 rounded">
+                  className="text-muted-foreground hover:text-foreground text-xs px-2 py-1 bg-muted rounded">
                   {copied ? 'Copied!' : 'Copy'}
                 </button>
               </div>
@@ -285,8 +285,8 @@ export default function VibeBuilderDashboard() {
               <span
                 className={`px-3 py-1 rounded-full text-xs font-semibold ${
                   site?.is_published
-                    ? 'bg-green-900/50 text-green-400 border border-green-700'
-                    : 'bg-gray-800 text-gray-400 border border-gray-700'
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-400 border border-green-200 dark:border-green-700'
+                    : 'bg-muted text-muted-foreground border border-border'
                 }`}
               >
                 {site?.is_published ? '● Live' : '○ Draft'}
@@ -296,8 +296,8 @@ export default function VibeBuilderDashboard() {
                 disabled={saving}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-50 ${
                   site?.is_published
-                    ? 'bg-gray-700 hover:bg-gray-600 text-white'
-                    : 'bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white shadow-lg shadow-violet-900/30'
+                    ? 'bg-secondary hover:bg-secondary/80 text-secondary-foreground'
+                    : 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20'
                 }`}
               >
                 {saving ? 'Saving...' : site?.is_published ? 'Unpublish' : 'Publish'}
@@ -308,37 +308,37 @@ export default function VibeBuilderDashboard() {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-3 gap-4">
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-            <p className="text-xs text-gray-500 uppercase">Total Pages</p>
-            <p className="text-xl font-bold text-white mt-1">{site?.pages.length ?? 0}</p>
+          <div className="bg-card border border-border rounded-xl p-4">
+            <p className="text-xs text-muted-foreground uppercase">Total Pages</p>
+            <p className="text-xl font-bold text-foreground mt-1">{site?.pages.length ?? 0}</p>
           </div>
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-            <p className="text-xs text-gray-500 uppercase">Status</p>
-            <p className="text-xl font-bold text-white mt-1">{site?.is_published ? 'Published' : 'Draft'}</p>
+          <div className="bg-card border border-border rounded-xl p-4">
+            <p className="text-xs text-muted-foreground uppercase">Status</p>
+            <p className="text-xl font-bold text-foreground mt-1">{site?.is_published ? 'Published' : 'Draft'}</p>
           </div>
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-            <p className="text-xs text-gray-500 uppercase">Last Modified</p>
-            <p className="text-xl font-bold text-white mt-1 text-sm">{lastSaved ? lastSaved.toLocaleTimeString() : 'Unknown'}</p>
+          <div className="bg-card border border-border rounded-xl p-4">
+            <p className="text-xs text-muted-foreground uppercase">Last Modified</p>
+            <p className="text-xl font-bold text-foreground mt-1 text-sm">{lastSaved ? lastSaved.toLocaleTimeString() : 'Unknown'}</p>
           </div>
         </div>
 
         {/* Pages */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">Your Pages</h3>
-            <span className="text-sm text-gray-500">{site?.pages.length ?? 0} pages</span>
+            <h3 className="text-lg font-semibold text-foreground">Your Pages</h3>
+            <span className="text-sm text-muted-foreground">{site?.pages.length ?? 0} pages</span>
           </div>
 
           <div className="space-y-3">
             {site?.pages.map((page, index) => (
               <div
                 key={page.id}
-                className="group bg-gray-900 border border-gray-800 hover:border-gray-700 rounded-xl px-5 py-4 flex items-center justify-between transition-all"
+                className="group bg-card border border-border hover:border-primary/50 rounded-xl px-5 py-4 flex items-center justify-between transition-all"
               >
                 <div className="flex-1 flex items-center gap-3">
                   <div className="flex flex-col">
-                    <button onClick={() => movePage(index, -1)} disabled={index === 0} className="text-gray-500 hover:text-white disabled:opacity-30">↑</button>
-                    <button onClick={() => movePage(index, 1)} disabled={index === site.pages.length - 1} className="text-gray-500 hover:text-white disabled:opacity-30">↓</button>
+                    <button onClick={() => movePage(index, -1)} disabled={index === 0} className="text-muted-foreground hover:text-foreground disabled:opacity-30">↑</button>
+                    <button onClick={() => movePage(index, 1)} disabled={index === site.pages.length - 1} className="text-muted-foreground hover:text-foreground disabled:opacity-30">↓</button>
                   </div>
                   <div>
                     {editingPageId === page.id ? (
@@ -348,38 +348,38 @@ export default function VibeBuilderDashboard() {
                         onChange={(e) => setEditPageName(e.target.value)}
                         onBlur={() => savePageName(page.id)}
                         onKeyDown={(e) => e.key === 'Enter' && savePageName(page.id)}
-                        className="bg-gray-800 text-white px-2 py-1 rounded outline-none border border-violet-500"
+                        className="bg-muted text-foreground px-2 py-1 rounded outline-none border border-primary"
                       />
                     ) : (
-                      <p className="font-medium text-white cursor-pointer hover:text-violet-400" onClick={() => { setEditingPageId(page.id); setEditPageName(page.name); }}>
+                      <p className="font-medium text-foreground cursor-pointer hover:text-primary" onClick={() => { setEditingPageId(page.id); setEditPageName(page.name); }}>
                         {page.name}
                       </p>
                     )}
                     <div className="flex items-center gap-2 mt-0.5">
-                      <p className="text-xs text-gray-500">/{page.path}</p>
-                      {page.path === 'home' && <span className="text-[10px] bg-violet-900/50 text-violet-300 px-1.5 rounded">Homepage</span>}
+                      <p className="text-xs text-muted-foreground">/{page.path}</p>
+                      {page.path === 'home' && <span className="text-[10px] bg-primary/20 text-primary px-1.5 rounded">Homepage</span>}
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   {page.path !== 'home' && (
-                    <button onClick={() => setAsHomepage(page.id)} className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm transition-all hidden group-hover:block">
+                    <button onClick={() => setAsHomepage(page.id)} className="px-3 py-1.5 bg-muted hover:bg-accent text-muted-foreground rounded-lg text-sm transition-all hidden group-hover:block">
                       Set as Home
                     </button>
                   )}
-                  <button onClick={() => duplicatePage(page)} className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-sm transition-all hidden group-hover:block">
+                  <button onClick={() => duplicatePage(page)} className="px-3 py-1.5 bg-muted hover:bg-accent text-muted-foreground rounded-lg text-sm transition-all hidden group-hover:block">
                     Duplicate
                   </button>
                   <button
                     onClick={() => navigate(`/editor?pageId=${page.id}`)}
-                    className="px-4 py-1.5 bg-violet-600/20 hover:bg-violet-600/40 border border-violet-700/50 text-violet-300 hover:text-white rounded-lg text-sm transition-all"
+                    className="px-4 py-1.5 bg-primary/20 hover:bg-primary/30 border border-primary/50 text-primary hover:text-primary/80 rounded-lg text-sm transition-all"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => deletePage(page.id)}
                     disabled={site.pages.length <= 1}
-                    className="px-3 py-1.5 bg-red-900/20 hover:bg-red-900/40 border border-red-800/50 text-red-400 hover:text-red-300 rounded-lg text-sm transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="px-3 py-1.5 bg-destructive/10 hover:bg-destructive/20 border border-destructive/20 text-destructive rounded-lg text-sm transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     Delete
                   </button>
@@ -396,12 +396,12 @@ export default function VibeBuilderDashboard() {
               onChange={(e) => setNewPageName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && addPage()}
               placeholder="Enter page name..."
-              className="flex-1 bg-gray-900 border border-gray-700 focus:border-violet-500 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 outline-none transition-colors"
+              className="flex-1 bg-card border border-border focus:border-primary rounded-lg px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground outline-none transition-colors"
             />
             <button
               onClick={addPage}
               disabled={!newPageName.trim() || saving}
-              className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white rounded-lg text-sm font-medium transition-all"
+              className="px-5 py-2.5 bg-primary hover:bg-primary/90 disabled:opacity-40 text-primary-foreground rounded-lg text-sm font-medium transition-all"
             >
               Add Page
             </button>

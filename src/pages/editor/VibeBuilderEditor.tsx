@@ -128,7 +128,7 @@ const CanvasNode = React.memo(function CanvasNode({
   );
 
   const wrapperClass = `group relative cursor-pointer transition-all rounded ${
-    isSelected ? 'ring-2 ring-violet-500 ring-offset-2 ring-offset-gray-900' : 'hover:ring-1 hover:ring-gray-600'
+    isSelected ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : 'hover:ring-1 hover:ring-border'
   }`;
 
   const handleClick = (e: React.MouseEvent) => {
@@ -201,9 +201,9 @@ const CanvasNode = React.memo(function CanvasNode({
   if (node.type === 'spacer') {
     return (
       <div className={wrapperClass} onClick={handleClick}
-        style={{ height: node.props.height || '48px', backgroundColor: 'rgba(109,40,217,0.05)', border: '1px dashed #4c1d95' }}>
+        style={{ height: node.props.height || '48px', backgroundColor: 'var(--primary-20)', border: '1px dashed var(--primary)' }}>
         {controlBar}
-        <span className="text-xs text-violet-400 flex items-center justify-center h-full">Spacer</span>
+        <span className="text-xs text-primary flex items-center justify-center h-full">Spacer</span>
       </div>
     );
   }
@@ -249,7 +249,7 @@ const SortableCanvasNode = React.memo(function SortableCanvasNode(props: any) {
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
       {/* Drag handle */}
-      <div {...listeners} className="absolute left-1 top-1 z-20 cursor-grab opacity-0 group-hover:opacity-100 bg-gray-800 text-white rounded p-1 text-xs" title="Drag to reorder">
+      <div {...listeners} className="absolute left-1 top-1 z-20 cursor-grab opacity-0 group-hover:opacity-100 bg-card text-foreground rounded p-1 text-xs shadow-sm border border-border" title="Drag to reorder">
         ⠿
       </div>
       <CanvasNode {...props} />
@@ -287,23 +287,23 @@ function Inspector({ node, onChange, onImageUpload }: {
 
   return (
     <div className="space-y-4">
-      <div className="bg-gray-800/50 rounded-lg px-3 py-2">
-        <span className="text-xs text-gray-500 uppercase tracking-wider">Type</span>
-        <span className="text-xs font-semibold text-violet-400 uppercase">{node.type}</span>
+      <div className="bg-muted rounded-lg px-3 py-2 flex items-center justify-between">
+        <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Element Type</span>
+        <span className="text-[10px] font-bold text-primary uppercase">{node.type}</span>
       </div>
 
       {node.type === 'image' && (
         <div>
-          <label className="block text-xs text-gray-400 mb-1">Image Source URL</label>
+          <label className="block text-xs text-muted-foreground mb-1 font-medium">Image Source URL</label>
           <input
             type="text"
             value={node.src ?? ''}
             onChange={(e) => onChange('src', e.target.value)}
             placeholder="https://..."
-            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-violet-500"
+            className="w-full bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
           />
           <label className="mt-2 flex items-center gap-2 cursor-pointer">
-            <span className="text-xs bg-violet-700 hover:bg-violet-600 text-white px-3 py-1.5 rounded-lg transition-colors">Upload Image</span>
+            <span className="text-xs bg-primary hover:bg-primary/90 text-primary-foreground px-3 py-1.5 rounded-lg transition-colors font-medium">Upload Image</span>
             <input type="file" accept="image/*" className="hidden" onChange={(e) => {
               const f = e.target.files?.[0];
               if (f) onImageUpload(f);
@@ -317,17 +317,17 @@ function Inspector({ node, onChange, onImageUpload }: {
         const value = key === 'content' ? (node.content ?? '') : (node.props[key] ?? '');
         return (
           <div key={key}>
-            <label className="block text-xs text-gray-400 mb-1">{label}</label>
+            <label className="block text-[11px] text-muted-foreground mb-1 font-medium">{label}</label>
             {type === 'color' ? (
               <div className="flex items-center gap-2">
                 <input type="color" value={value || '#000000'} onChange={(e) => onChange(key, e.target.value)}
                   className="w-8 h-8 rounded cursor-pointer bg-transparent border-0" />
                 <input type="text" value={value} onChange={(e) => onChange(key, e.target.value)}
-                  className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-violet-500" />
+                  className="flex-1 bg-card border border-border rounded-lg px-2 py-1.5 text-xs text-foreground outline-none focus:border-primary" />
               </div>
             ) : type === 'select' ? (
               <select value={value} onChange={(e) => onChange(key, e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-violet-500">
+                className="w-full bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground outline-none focus:border-primary">
                 <option value="">Default</option>
                 {fields.find(f => f.key === key)?.options?.map(opt => (
                   <option key={opt} value={opt}>{opt}</option>
@@ -335,7 +335,7 @@ function Inspector({ node, onChange, onImageUpload }: {
               </select>
             ) : (
               <input type="text" value={value} onChange={(e) => onChange(key, e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-violet-500" />
+                className="w-full bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground outline-none focus:border-primary" />
             )}
           </div>
         );
@@ -618,20 +618,20 @@ export default function VibeBuilderEditor() {
 
   if (loading) {
     return (
-      <div className="w-full min-h-screen bg-gray-950 flex flex-col p-6 space-y-4">
+      <div className="w-full min-h-screen bg-background flex flex-col p-6 space-y-4">
         {/* Top bar skeleton */}
-        <div className="h-14 bg-gray-900 rounded animate-pulse" />
+        <div className="h-14 bg-muted rounded animate-pulse" />
         <div className="flex flex-1 gap-4">
           {/* Sidebar skeleton */}
-          <div className="w-60 bg-gray-900 rounded animate-pulse" />
+          <div className="w-60 bg-muted rounded animate-pulse" />
           {/* Canvas skeleton */}
           <div className="flex-1 space-y-6 p-4">
-            <div className="h-32 bg-gray-800/50 rounded-xl animate-pulse" />
-            <div className="h-64 bg-gray-800/50 rounded-xl animate-pulse" />
-            <div className="h-32 bg-gray-800/50 rounded-xl animate-pulse" />
+            <div className="h-32 bg-muted/50 rounded-xl animate-pulse" />
+            <div className="h-64 bg-muted/50 rounded-xl animate-pulse" />
+            <div className="h-32 bg-muted/50 rounded-xl animate-pulse" />
           </div>
           {/* Inspector skeleton */}
-          <div className="w-72 bg-gray-900 rounded animate-pulse" />
+          <div className="w-72 bg-muted rounded animate-pulse" />
         </div>
       </div>
     );
@@ -639,10 +639,10 @@ export default function VibeBuilderEditor() {
 
   if (error) {
     return (
-      <div className="w-full min-h-screen bg-gray-950 flex flex-col items-center justify-center p-6 text-center">
-        <h2 className="text-2xl font-bold text-white mb-2">Something went wrong</h2>
-        <p className="text-red-400 mb-6">{error}</p>
-        <button onClick={() => window.location.reload()} className="px-6 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg">
+      <div className="w-full min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center">
+        <h2 className="text-2xl font-bold text-foreground mb-2">Something went wrong</h2>
+        <p className="text-destructive mb-6">{error}</p>
+        <button onClick={() => window.location.reload()} className="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg">
           Try Again
         </button>
       </div>
@@ -651,37 +651,37 @@ export default function VibeBuilderEditor() {
 
   if (!page) {
     return (
-      <div className="w-full min-h-screen bg-gray-950 flex items-center justify-center">
-        <p className="text-gray-400">Page not found</p>
+      <div className="w-full min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Page not found</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full min-h-screen bg-gray-950 flex flex-col" style={{ fontFamily: 'Inter, sans-serif' }}>
+    <div className="w-full min-h-screen bg-background flex flex-col" style={{ fontFamily: 'Inter, sans-serif' }}>
       {/* Top Bar */}
-      <div className="h-14 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-4 gap-4 shrink-0 z-20">
+      <div className="h-14 bg-card border-b border-border flex items-center justify-between px-4 gap-4 shrink-0 z-20">
         <div className="flex items-center gap-3">
-          <a href="/vibebuilder" className="text-gray-400 hover:text-white transition-colors text-sm">← Dashboard</a>
-          <span className="text-gray-600">|</span>
-          <span className="text-white font-semibold text-sm">{page.name}</span>
+          <a href="/vibebuilder" className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium">← Dashboard</a>
+          <span className="text-border">|</span>
+          <span className="text-foreground font-semibold text-sm">{page.name}</span>
         </div>
         <div className="flex items-center gap-2">
-          {status && <span className="text-xs text-gray-400 mr-2">{status}</span>}
+          {status && <span className="text-[10px] text-muted-foreground mr-2 font-medium">{status}</span>}
           <button onClick={undo} disabled={histIdx <= 0}
-            className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 disabled:opacity-30 text-white text-xs rounded-lg transition-all">Undo</button>
+            className="px-3 py-1.5 bg-muted hover:bg-accent disabled:opacity-30 text-foreground text-xs rounded-lg transition-all font-medium">Undo</button>
           <button onClick={redo} disabled={histIdx >= history.length - 1}
-            className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 disabled:opacity-30 text-white text-xs rounded-lg transition-all">Redo</button>
+            className="px-3 py-1.5 bg-muted hover:bg-accent disabled:opacity-30 text-foreground text-xs rounded-lg transition-all font-medium">Redo</button>
           <button onClick={save} disabled={saving}
-            className="px-4 py-1.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-xs font-semibold rounded-lg transition-all">
+            className="px-4 py-1.5 bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground text-xs font-semibold rounded-lg transition-all">
             {saving ? 'Saving...' : 'Save'}
           </button>
           <button
             onClick={() => window.open(`/site/${username}/${page.path}`, '_blank')}
-            className="px-4 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-xs font-semibold rounded-lg transition-all"
+            className="px-4 py-1.5 bg-secondary hover:bg-secondary/80 text-secondary-foreground text-xs font-semibold rounded-lg transition-all"
           >Preview</button>
           {/* Theme & Language — moved from global header */}
-          <div className="flex items-center gap-1 ml-2 pl-2 border-l border-gray-700">
+          <div className="flex items-center gap-1 ml-2 pl-2 border-l border-border">
             <ThemeSwitcher />
             <LanguageSelector />
           </div>
@@ -691,13 +691,13 @@ export default function VibeBuilderEditor() {
       {/* Editor body */}
       <div className="flex flex-1 overflow-hidden">
         {/* LEFT: Component Library */}
-        <div className="w-60 bg-gray-900 border-r border-gray-800 flex flex-col shrink-0 overflow-y-auto">
-          <p className="text-xs text-gray-500 uppercase tracking-widest px-4 pt-4 pb-2 font-semibold">Components</p>
+        <div className="w-60 bg-card border-r border-border flex flex-col shrink-0 overflow-y-auto">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-widest px-4 pt-4 pb-2 font-bold">Components</p>
           <div className="px-3 pb-4 space-y-1">
             {COMPONENT_TYPES.map((type) => (
               <button key={type} onClick={() => addNode(type)}
-                className="w-full text-left px-3 py-2.5 rounded-lg bg-gray-800/60 hover:bg-violet-900/40 hover:border-violet-700 border border-transparent text-gray-300 hover:text-white text-sm transition-all capitalize flex items-center gap-2">
-                <span className="text-violet-400">+</span> {type}
+                className="w-full text-left px-3 py-2 rounded-lg bg-muted/40 hover:bg-primary/10 hover:border-primary/50 border border-transparent text-foreground text-xs transition-all capitalize flex items-center gap-2 font-medium">
+                <span className="text-primary font-bold">+</span> {type}
               </button>
             ))}
           </div>
@@ -705,12 +705,12 @@ export default function VibeBuilderEditor() {
 
         {/* CENTER: Canvas */}
         <div
-          className="flex-1 overflow-y-auto bg-gray-100 relative"
+          className="flex-1 overflow-y-auto bg-muted/30 relative"
           onClick={() => setSelectedId(null)}
         >
           <div className="min-h-full p-4" style={{ minWidth: '360px' }}>
             {nodes.length === 0 && (
-              <div className="flex items-center justify-center h-96 text-gray-400 text-sm border-2 border-dashed border-gray-300 rounded-xl m-4">
+              <div className="flex items-center justify-center h-96 text-muted-foreground text-sm border-2 border-dashed border-border rounded-xl m-4">
                 Click a component to add it
               </div>
             )}
@@ -737,8 +737,8 @@ export default function VibeBuilderEditor() {
         </div>
 
         {/* RIGHT: Inspector */}
-        <div className="w-72 bg-gray-900 border-l border-gray-800 flex flex-col shrink-0 overflow-y-auto">
-          <p className="text-xs text-gray-500 uppercase tracking-widest px-4 pt-4 pb-2 font-semibold">Inspector</p>
+        <div className="w-72 bg-card border-l border-border flex flex-col shrink-0 overflow-y-auto">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-widest px-4 pt-4 pb-2 font-bold">Inspector</p>
           <div className="px-4 pb-4">
             {selectedNode ? (
               <Inspector
@@ -747,7 +747,7 @@ export default function VibeBuilderEditor() {
                 onImageUpload={handleImageUpload}
               />
             ) : (
-              <p className="text-gray-600 text-sm">Select an element to edit</p>
+              <p className="text-muted-foreground text-xs font-medium">Select an element to edit</p>
             )}
           </div>
         </div>
