@@ -1,25 +1,14 @@
-import { SiteData } from '@/types/vibe';
-
-const GRAPHQL_URL = `${import.meta.env.VITE_API_BASE_URL}/dgs/v1/${import.meta.env.VITE_PROJECT_SLUG}/graphql`;
+const BASE = import.meta.env.VITE_API_BASE_URL;
+const SLUG = import.meta.env.VITE_PROJECT_SLUG;
 const KEY = import.meta.env.VITE_X_BLOCKS_KEY;
+const GQL = `${BASE}/dgs/v1/${SLUG}/graphql`;
 
-const getToken = (): string => {
-  const keys = [
-    'access_token',
-    'token', 
-    'selise_access_token',
-    'selise_token',
-    'auth_token',
-    'blocks_token'
-  ];
-  for (const key of keys) {
-    const val = localStorage.getItem(key) || sessionStorage.getItem(key);
-    if (val) return val;
-  }
-  return '';
-};
+const getToken = (): string =>
+  localStorage.getItem('access_token') ||
+  localStorage.getItem('token') ||
+  localStorage.getItem('selise_access_token') || '';
 
-const gqlHeaders = () => ({
+const authHeaders = () => ({
   'Content-Type': 'application/json',
   'x-blocks-key': KEY,
   'Authorization': `Bearer ${getToken()}`
@@ -30,147 +19,215 @@ const publicHeaders = () => ({
   'x-blocks-key': KEY
 });
 
-async function graphql(query: string, variables: any, isPublic = false) {
-  const res = await fetch(GRAPHQL_URL, {
-    method: 'POST',
-    headers: isPublic ? publicHeaders() : gqlHeaders(),
-    body: JSON.stringify({ query, variables })
-  });
-  
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const json = await res.json();
-  if (json.errors) {
-    console.warn('[GQL Errors]', json.errors);
-    throw new Error(json.errors[0]?.message || 'GraphQL Error');
+async function gql(query: string, variables: any, pub = false) {
+  try {
+    const res = await fetch(GQL, {
+      method: 'POST',
+      headers: pub ? publicHeaders() : authHeaders(),
+      body: JSON.stringify({ query, variables })
+    });
+    const json = await res.json();
+    if (json.errors) {
+      console.warn('[DGS Error]', json.errors);
+    }
+    return json.data;
+  } catch (err) {
+    console.error('[DGS Failed]', err);
+    return null;
   }
-  return json.data;
-}
-
-function mapRecord(record: any): SiteData {
-  return {
-    id: record.id,
-    user_id: record.UserId,
-    username: record.Username,
-    is_published: record.IsPublished,
-    pages: typeof record.Pages === 'string' ? JSON.parse(record.Pages) : record.Pages || []
-  };
 }
 
 export const contentService = {
-  // FUNCTION 1 - getSiteByUserId(userId)
-  async getByUserId(userId: string): Promise<SiteData | null> {
-    try {
-      const data = await graphql(`
-        query GetSiteByUserId($userId: String!) {
-          Website(where: {UserId: {_eq: $userId}}, limit: 1) {
-            id
-            UserId
-            Username
-            IsPublished
-            Pages
-          }
+  async getSiteByUserId(userId: string): Promise<any | null> {
+    const data = await gql(`
+      query($filter: Website_bool_exp) {
+        Website(where: $filter, limit: 1) {
+          ItemId
+          UserId
+          Username
+          IsPublished
+          Pages
+          Title
+          Description
+          HomePageId
         }
-      `, { userId });
+      }
+    `, { filter: { UserId: { _eq: userId } } });
 
-      const record = data?.Website?.[0];
-      if (!record) return null;
-
-      const site = mapRecord(record);
-      localStorage.setItem('vibe_site_' + userId, JSON.stringify(site));
-      return site;
-    } catch (err) {
-      console.warn('[GQL] getByUserId failed:', err);
-      const local = localStorage.getItem('vibe_site_' + userId);
+    const record = data?.Website?.[0];
+    if (!record) {
+      const local = localStorage.getItem('vibe_' + userId);
       return local ? JSON.parse(local) : null;
     }
+
+    const site = {
+      itemId: record.ItemId,
+      user_id: record.UserId,
+      username: record.Username,
+      is_published: record.IsPublished,
+      title: record.Title || '',
+      description: record.Description || '',
+      homePageId: record.HomePageId || '',
+      pages: (() => {
+        try { return JSON.parse(record.Pages || '[]'); }
+        catch { return []; }
+      })()
+    };
+
+    localStorage.setItem('vibe_' + userId, JSON.stringify(site));
+    return site;
   },
 
-  // FUNCTION 2 - getSiteByUsername(username)
-  async getByUsername(username: string): Promise<SiteData | null> {
-    try {
-      const data = await graphql(`
-        query GetSiteByUsername($username: String!) {
-          Website(where: {Username: {_eq: $username}}, limit: 1) {
-            id
-            UserId
-            Username
-            IsPublished
-            Pages
+  async getSiteByUsername(username: string): Promise<any | null> {
+    const data = await gql(`
+      query($filter: Website_bool_exp) {
+        Website(where: $filter, limit: 1) {
+          ItemId
+          UserId
+          Username
+          IsPublished
+          Pages
+          Title
+          Description
+          HomePageId
+        }
+      }
+    `, { filter: { Username: { _eq: username } } }, true);
+
+    const record = data?.Website?.[0];
+    if (!record) {
+      const local = localStorage.getItem('vibe_user_' + username);
+      return local ? JSON.parse(local) : null;
+    }
+
+    return {
+      itemId: record.ItemId,
+      user_id: record.UserId,
+      username: record.Username,
+      is_published: record.IsPublished,
+      title: record.Title || '',
+      pages: (() => {
+        try { return JSON.parse(record.Pages || '[]'); }
+        catch { return []; }
+      })()
+    };
+  },
+
+  async saveSiteData(site: any): Promise<void> {
+    // Always save locally first
+    localStorage.setItem('vibe_' + site.user_id, JSON.stringify(site));
+    localStorage.setItem('vibe_user_' + site.username, JSON.stringify(site));
+
+    const pagesJson = JSON.stringify(site.pages);
+
+    if (site.itemId) {
+      // UPDATE existing record
+      await gql(`
+        mutation($ItemId: String!, $Pages: String!, $IsPublished: Boolean!, $Username: String!, $Title: String, $HomePageId: String) {
+          updateWebsite(
+            ItemId: $ItemId
+            Pages: $Pages
+            IsPublished: $IsPublished
+            Username: $Username
+            Title: $Title
+            HomePageId: $HomePageId
+          ) {
+            ItemId
           }
         }
-      `, { username }, true);
-
-      const record = data?.Website?.[0];
-      if (!record) return null;
-
-      return mapRecord(record);
-    } catch (err) {
-      console.warn('[GQL] getByUsername failed:', err);
-      return null;
-    }
-  },
-
-  // FUNCTION 3 - createSite(siteData)
-  async create(siteData: Omit<SiteData, 'id'>): Promise<string> {
-    const data = await graphql(`
-      mutation CreateSite($object: Website_insert_input!) {
-        insert_Website_one(object: $object) {
-          id
+      `, {
+        ItemId: site.itemId,
+        Pages: pagesJson,
+        IsPublished: site.is_published ?? false,
+        Username: site.username,
+        Title: site.title || '',
+        HomePageId: site.homePageId || ''
+      });
+    } else {
+      // CREATE new record
+      await gql(`
+        mutation($UserId: String!, $Username: String!, $IsPublished: Boolean!, $Pages: String!, $Title: String, $HomePageId: String) {
+          createWebsite(
+            UserId: $UserId
+            Username: $Username
+            IsPublished: $IsPublished
+            Pages: $Pages
+            Title: $Title
+            HomePageId: $HomePageId
+          ) {
+            ItemId
+          }
         }
-      }
-    `, {
-      object: {
-        UserId: siteData.user_id,
-        Username: siteData.username,
-        IsPublished: siteData.is_published,
-        Pages: JSON.stringify(siteData.pages)
-      }
-    });
-
-    const id = data?.insert_Website_one?.id;
-    localStorage.setItem('vibe_site_' + siteData.user_id, JSON.stringify({ ...siteData, id }));
-    return id;
-  },
-
-  // FUNCTION 4 - updateSite(recordId, siteData)
-  async update(recordId: string, siteData: Partial<SiteData> & { user_id: string }): Promise<void> {
-    const object: any = {};
-    if (siteData.is_published !== undefined) object.IsPublished = siteData.is_published;
-    if (siteData.pages !== undefined) object.Pages = JSON.stringify(siteData.pages);
-    if (siteData.username !== undefined) object.Username = siteData.username;
-
-    await graphql(`
-      mutation UpdateSite($id: uuid!, $object: Website_set_input!) {
-        update_Website_by_pk(pk_columns: {id: $id}, _set: $object) {
-          id
-        }
-      }
-    `, { id: recordId, object });
-
-    // Sync localStorage
-    const current = localStorage.getItem('vibe_site_' + siteData.user_id);
-    const updated = current ? { ...JSON.parse(current), ...siteData } : siteData;
-    localStorage.setItem('vibe_site_' + siteData.user_id, JSON.stringify(updated));
-  },
-
-  // FUNCTION 5 - saveSiteData(siteData) - High level wrapper
-  async saveSiteData(siteData: SiteData): Promise<void> {
-    localStorage.setItem('vibe_site_' + siteData.user_id, JSON.stringify(siteData));
-    localStorage.setItem('vibe_user_' + siteData.username, JSON.stringify(siteData));
-
-    try {
-      const existing = await this.getByUserId(siteData.user_id);
-      if (existing?.id) {
-        await this.update(existing.id, siteData);
-      } else {
-        await this.create(siteData);
-      }
-    } catch (err) {
-      console.warn('[GQL] saveSiteData failed:', err);
+      `, {
+        UserId: site.user_id,
+        Username: site.username,
+        IsPublished: site.is_published ?? false,
+        Pages: pagesJson,
+        Title: site.title || '',
+        HomePageId: site.homePageId || ''
+      });
     }
+
+    console.log('[DGS] Site saved successfully');
   },
 
-  // Aliases for compatibility
-  async getSiteByUserId(userId: string) { return this.getByUserId(userId); },
-  async getSiteByUsername(username: string) { return this.getByUsername(username); },
+  createDefault(userId: string, username: string): any {
+    return {
+      user_id: userId,
+      username,
+      is_published: false,
+      title: `${username}'s Website`,
+      description: '',
+      homePageId: 'home',
+      pages: [{
+        id: 'home',
+        name: 'Home',
+        path: '/home',
+        rootNode: {
+          id: 'root',
+          type: 'section',
+          props: {
+            minHeight: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#ffffff',
+            padding: '40px 24px',
+            textAlign: 'center'
+          },
+          children: [
+            {
+              id: 'h1',
+              type: 'text',
+              content: `Welcome to ${username}'s site`,
+              props: {
+                fontSize: '48px',
+                fontWeight: '800',
+                color: '#09090b',
+                marginBottom: '16px'
+              },
+              children: []
+            },
+            {
+              id: 'sub',
+              type: 'text', 
+              content: 'Built with VibeBuilder',
+              props: {
+                fontSize: '20px',
+                color: '#71717a'
+              },
+              children: []
+            }
+          ]
+        }
+      }]
+    };
+  },
+
+  // Aliases for backward compatibility
+  async getByUserId(userId: string) { return this.getSiteByUserId(userId); },
+  async getByUsername(username: string) { return this.getSiteByUsername(username); },
+  async create(site: any) { return this.saveSiteData(site); },
+  async update(id: string, site: any) { return this.saveSiteData({ ...site, itemId: id }); }
 };

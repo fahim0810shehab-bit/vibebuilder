@@ -535,7 +535,7 @@ export default function VibeBuilderEditor() {
 
         if (data) {
           setSite(data);
-          const pg = data.pages.find((p) => p.id === pageId) ?? data.pages[0];
+          const pg = data.pages.find((p: any) => p.id === pageId) ?? data.pages[0];
           if (pg) {
             setPage(pg);
             const initial = pg.rootNode?.children ?? [];
@@ -546,7 +546,7 @@ export default function VibeBuilderEditor() {
         }
       } catch (err) {
         console.error('Failed to load site:', err);
-        const local = localStorage.getItem('vibe_site_' + userId);
+        const local = localStorage.getItem('vibe_site_' + userId) || localStorage.getItem('vibe_' + userId);
         if (local) {
           try {
             const data = JSON.parse(local);
@@ -684,7 +684,7 @@ export default function VibeBuilderEditor() {
 
   // Save
   const save = useCallback(async () => {
-    if (!site?.id || !page) return;
+    if (!site?.itemId || !page) return;
     console.log('[SAVE] Save triggered', site);
     console.log('[SAVE] userId:', userId);
     console.log('[SAVE] token:', accessToken);
@@ -701,9 +701,10 @@ export default function VibeBuilderEditor() {
     try {
       // Always save to localStorage first as fallback
       localStorage.setItem(`vibe_site_${userId}`, JSON.stringify(updatedSite));
+      localStorage.setItem(`vibe_${userId}`, JSON.stringify(updatedSite));
       localStorage.setItem(`vibe_user_${username}`, JSON.stringify(updatedSite));
 
-      await contentService.update(site.id, { user_id: site.user_id, is_published: site.is_published, pages: updatedPages });
+      await contentService.update(site.itemId, { user_id: site.user_id, is_published: site.is_published, pages: updatedPages });
       setSite(updatedSite);
       setPage(updatedPage);
       setStatus('Saved ✓');

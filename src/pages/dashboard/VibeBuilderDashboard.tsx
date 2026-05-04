@@ -112,10 +112,11 @@ export default function VibeBuilderDashboard() {
   }, [userId, accessToken, loadSite]);
 
   const saveSite = async (updated: SiteData) => {
-    if (!updated.id) return;
+    if (!updated.itemId) return;
     setSaving(true);
     try {
-      await contentService.update(updated.id, {
+      await contentService.update(updated.itemId, {
+        user_id: updated.user_id,
         is_published: updated.is_published,
         pages: updated.pages,
       });

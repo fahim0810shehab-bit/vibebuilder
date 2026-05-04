@@ -51,6 +51,7 @@ export interface VibePage {
 
 export interface SiteData {
   id?: string;
+  itemId?: string;
   user_id: string;
   username: string;
   is_published: boolean;
