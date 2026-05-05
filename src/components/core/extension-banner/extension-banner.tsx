@@ -17,46 +17,45 @@ export const ExtensionBanner = () => {
     'dev-construct.seliseblocks.com',
   ].some((domain) => window.location.hostname === domain);
 
+  if (!isBannerAllowedToVisible || !showBanner) return null;
+  
   return (
-    isBannerAllowedToVisible &&
-    showBanner && (
-      <div className="sm:relative w-full flex items-center sm:justify-between bg-surface py-3 px-4">
-        <div className="flex w-full items-center justify-center gap-2">
-          <span className="text-sm">
-            {t('EXPERIENCE_UILM_CAPABILITIES_CONSTRUCT')}{' '}
-            <a
-              href="https://selisegroup.com/blocks/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-semibold underline hover:text-primary"
-            >
-              {t('LEARN_MORE')}
-            </a>
-          </span>
+    <div className="sm:relative w-full flex items-center sm:justify-between bg-surface py-3 px-4">
+      <div className="flex w-full items-center justify-center gap-2">
+        <span className="text-sm">
+          {t('EXPERIENCE_UILM_CAPABILITIES_CONSTRUCT')}{' '}
           <a
-            href="https://chromewebstore.google.com/detail/ehnhmdghlkaeaiinoahgipdeogkikjem?utm_source=item-share-cb"
+            href="https://selisegroup.com/blocks/"
             target="_blank"
             rel="noopener noreferrer"
+            className="text-sm font-semibold underline hover:text-primary"
           >
-            <Button variant="outline" size="sm" className="!gap-0">
-              <span className="capitalize font-bold text-sm hidden sm:inline">
-                {t('GET_EXTENSION')}
-              </span>
-              <SquareArrowOutUpRight className="h-4 w-4 sm:ml-2" />
-            </Button>
+            {t('LEARN_MORE')}
           </a>
-        </div>
-        <div className="sm:absolute sm:top-4 sm:right-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowBanner(false)}
-            className="h-fit w-fit p-1 rounded hover:bg-neutral-100 text-medium-emphasis"
-          >
-            <X className="h-4 w-4" />
+        </span>
+        <a
+          href="https://chromewebstore.google.com/detail/ehnhmdghlkaeaiinoahgipdeogkikjem?utm_source=item-share-cb"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Button variant="outline" size="sm" className="!gap-0">
+            <span className="capitalize font-bold text-sm hidden sm:inline">
+              {t('GET_EXTENSION')}
+            </span>
+            <SquareArrowOutUpRight className="h-4 w-4 sm:ml-2" />
           </Button>
-        </div>
+        </a>
       </div>
-    )
+      <div className="sm:absolute sm:top-4 sm:right-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setShowBanner(false)}
+          className="h-fit w-fit p-1 rounded hover:bg-neutral-100 text-medium-emphasis"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
   );
 };

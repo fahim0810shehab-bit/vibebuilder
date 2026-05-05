@@ -11,9 +11,11 @@ import { Toaster } from '@/components/ui-kit/toaster';
 import { useLanguageContext } from '@/i18n/language-context';
 import { LoadingOverlay } from '@/components/core';
 import { NotFoundPage } from '@/modules/error-view';
+import { useAuthStore } from '@/state/store/auth';
 
 export const AppRoutes = () => {
   const { isLoading } = useLanguageContext();
+  const { isAuthenticated } = useAuthStore();
 
   if (isLoading) {
     return <LoadingOverlay />;
@@ -59,7 +61,16 @@ export const AppRoutes = () => {
             <Route path="/site/:username/:pageSlug" element={<PublicSite />} />
 
             {/* Redirects */}
-            <Route path="/" element={<Navigate to="/vibebuilder" />} />
+            <Route
+              path="/"
+              element={
+                isAuthenticated ? (
+                  <Navigate to="/vibebuilder" replace />
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
             <Route path="*" element={<Navigate to="/404" />} />
           </Routes>
         </SidebarProvider>

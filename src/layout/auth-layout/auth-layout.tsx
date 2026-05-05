@@ -138,31 +138,82 @@ export const AuthLayout = () => {
       );
     }
 
+    if (loginOptionsError) {
+      return (
+        <div className="w-full max-w-xl mx-auto">
+          <div className="relative overflow-hidden rounded-xl border border-border bg-card p-8 shadow-xl">
+            <div className="text-center space-y-4">
+              <h2 className="text-xl font-bold text-foreground">
+                Connection Issue
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                We're having trouble connecting to the authentication services.
+                Please check your internet connection and try again.
+              </p>
+              <button 
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium"
+              >
+                Retry Loading
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return <Outlet />;
   };
 
-  if (isLoading) return null;
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen w-full bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-muted-foreground font-medium">Initializing secure session...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex w-full flex-col h-screen">
+    <div className="flex w-full flex-col min-h-screen bg-background text-foreground selection:bg-primary/20">
       <ExtensionBanner />
-      <div className="flex w-full min-h-screen relative">
-        <div className="hidden md:block w-[36%] relative bg-primary-50">
-          <img
-            src={getBackgroundImage()}
-            alt="bg auth"
-            className="w-full h-full object-cover"
-            key={theme ?? 'default'}
-          />
-        </div>
-        <div className="flex items-center justify-center w-full px-6 sm:px-20 md:w-[64%] md:px-[14%] lg:px-[16%] 2xl:px-[20%]">
-          <div className="absolute top-2 right-4">
-            <div className="flex flex-row gap-2">
-              <ThemeSwitcher />
-              <LanguageSelector />
-            </div>
+      <div className="flex w-full flex-1 relative overflow-hidden">
+        {/* Atmospheric Background Layer */}
+        <div className="hidden md:block w-[40%] relative overflow-hidden bg-[#0a0a0b]">
+          <div className="absolute inset-0 opacity-40">
+            <div className="absolute -top-[20%] -left-[20%] w-[140%] h-[140%] bg-[radial-gradient(circle_at_50%_50%,#7c3aed_0%,transparent_50%)] blur-[120px] animate-pulse" />
+            <div className="absolute top-[20%] right-[10%] w-[80%] h-[80%] bg-[radial-gradient(circle_at_50%_50%,#3b82f6_0%,transparent_50%)] blur-[100px]" />
           </div>
-          {renderAuthContent()}
+          <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay" />
+          
+          <div className="relative z-10 flex flex-col items-start justify-center h-full px-12 lg:px-20">
+            <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center text-white text-2xl font-black mb-8 shadow-[0_0_40px_rgba(124,58,237,0.5)]">
+              V
+            </div>
+            <h1 className="text-4xl lg:text-5xl font-bold text-white mb-6 leading-[1.1]">
+              Build your vibe.<br/>
+              <span className="text-primary-300">Fast. Beautiful.</span>
+            </h1>
+            <p className="text-lg text-zinc-400 max-w-md font-light leading-relaxed">
+              Join thousands of creators building high-performance SaaS platforms with VibeBuilder.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-center w-full px-6 sm:px-20 md:w-[60%] md:px-[10%] lg:px-[12%] 2xl:px-[15%] relative">
+          <div className="absolute top-6 right-8 flex items-center gap-4">
+            <ThemeSwitcher />
+            <LanguageSelector />
+          </div>
+          
+          <div className="w-full max-w-md">
+            <div className="mb-10 block md:hidden">
+               <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-white text-xl font-black shadow-lg">V</div>
+            </div>
+            {renderAuthContent()}
+          </div>
         </div>
       </div>
     </div>

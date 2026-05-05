@@ -9,7 +9,7 @@ import {
   useRef,
 } from 'react';
 import { useLocation } from 'react-router-dom';
-import { loadTranslations } from './i18n';
+import i18nextInstance, { loadTranslations } from './i18n';
 import { routeModuleMap } from './route-module-map';
 
 /**
@@ -65,9 +65,10 @@ export function LanguageProvider({
   const [isLoading, setIsLoading] = useState(false); // Force false
   const languages: any[] = [{ languageCode: 'en-US', isDefault: true }];
   const modules: any[] = [{ moduleName: 'common' }];
-  const isInitialized = useRef(true); // Mark as initialized immediately
-  const hasCheckedDefaultLanguage = useRef(true);
+  const isInitialized = useRef(false);
+  const hasCheckedDefaultLanguage = useRef(false);
   const lastApiDefaultLanguage = useRef<string | null>('en-US');
+  const isLanguagesLoading = false;
 
   useEffect(() => {
     setIsLoading(false);
@@ -162,7 +163,7 @@ export function LanguageProvider({
         }
 
         await loadLanguageModules(language, location.pathname);
-        await i18n.changeLanguage(language);
+        await i18nextInstance.changeLanguage(language);
         setCurrentLanguage(language);
         isInitialized.current = true; // Mark as initialized after language change
       } catch (error) {
@@ -171,7 +172,7 @@ export function LanguageProvider({
         setIsLoading(false);
       }
     },
-    [loadLanguageModules, location.pathname, i18n]
+    [loadLanguageModules, location.pathname, i18nextInstance]
   );
 
   /**
@@ -242,7 +243,7 @@ export function LanguageProvider({
       setIsLoading(true);
       try {
         await loadLanguageModules(currentLanguage, location.pathname);
-        i18n.changeLanguage(currentLanguage);
+        i18nextInstance.changeLanguage(currentLanguage);
         isInitialized.current = true;
       } catch (error) {
         console.error('Failed to initialize translations:', error);
@@ -252,7 +253,7 @@ export function LanguageProvider({
     };
 
     initializeTranslations();
-  }, [currentLanguage, location.pathname, loadLanguageModules, i18n, isLanguagesLoading]);
+  }, [currentLanguage, location.pathname, loadLanguageModules, i18nextInstance, isLanguagesLoading]);
 
   /**
    * Effect hook to handle route changes.

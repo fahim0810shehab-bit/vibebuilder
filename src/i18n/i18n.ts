@@ -112,16 +112,27 @@ if (typeof window !== 'undefined') {
   window.__i18nKeyMode = false;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-(i18n as any).t = (key: string | string[]) => {
-  const k = Array.isArray(key) ? key[0] : key;
-  
-  // Return hardcoded English if exists
-  if (HARDCODED_ENGLISH[k]) return HARDCODED_ENGLISH[k];
-  
-  // Fallback to humanizing the key (e.g. "WELCOME_MESSAGE" -> "Welcome Message")
-  return k.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
-};
+// Safely monkey-patch i18n.t to handle hardcoded English and humanized keys
+try {
+  const originalT = i18n.t.bind(i18n);
+  (i18n as any).t = (key: string | string[], ...args: any[]) => {
+    const k = Array.isArray(key) ? key[0] : key;
+    
+    // Return hardcoded English if exists
+    if (HARDCODED_ENGLISH[k]) return HARDCODED_ENGLISH[k];
+    
+    // If it's a known key in i18next, use the original t function
+    // (This allows interpolation and other features to work for standard keys)
+    if (i18n.exists(k)) {
+      return originalT(key, ...args);
+    }
+    
+    // Fallback to humanizing the key (e.g. "WELCOME_MESSAGE" -> "Welcome Message")
+    return k.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+  };
+} catch (e) {
+  console.warn('[i18n] Failed to patch t function:', e);
+}
 
 // Listen for messages coming from the browser extension
 if (typeof window !== 'undefined') {
