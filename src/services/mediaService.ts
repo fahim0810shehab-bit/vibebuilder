@@ -82,6 +82,14 @@ export async function uploadImage(file: File): Promise<string> {
 
     // Step 3: Return permanent URL
     const permanentUrl = uploadUrl.split('?')[0];
+
+    if (permanentUrl.startsWith('blob:')) {
+      throw new Error('Got blob URL - UDS upload failed');
+    }
+    if (!permanentUrl.startsWith('https://')) {
+      throw new Error('Invalid URL: ' + permanentUrl);
+    }
+    console.log('[UDS] Permanent URL confirmed:', permanentUrl);
     return permanentUrl;
 
   } catch (err: any) {

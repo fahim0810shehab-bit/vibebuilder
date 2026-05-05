@@ -728,20 +728,36 @@ export default function VibeBuilderEditor() {
     setStatus('Uploading...');
     try {
       const url = await uploadImage(file);
+      
+      if (!url || !url.startsWith('https://')) {
+        alert('Upload failed - could not get permanent URL');
+        return;
+      }
 
       // Build the updated nodes with the fresh URL in both src and props.src
       const nodeId = selectedId;
       const updatedNodes = nodes.map((n) => n.id === nodeId ? {
         ...n,
         src: url,
-        props: { ...n.props, src: url }
+        props: { 
+          ...n.props, 
+          src: url,
+          width: '100%',
+          objectFit: 'cover'
+        }
       } : n);
+
+      // Verify update worked
+      const updated = updatedNodes.find(n => n.id === nodeId);
+      console.log('[VERIFY] Node after update:', {
+        src: updated?.src,
+        propsSrc: updated?.props?.src
+      });
 
       // Update React state
       updateNodes(updatedNodes);
 
-      // Save immediately with the fresh updatedNodes — do NOT use setTimeout(save)
-      // because save() is a useCallback that closes over the OLD `nodes` ref
+      // Save immediately with the fresh updatedNodes
       setSaving(true);
       setStatus('Saving...');
       const updatedPage: VibePage = {
@@ -801,6 +817,28 @@ export default function VibeBuilderEditor() {
     };
     const updatedPages = site.pages.map((p) => (p.id === page.id ? updatedPage : p));
     const updatedSite = { ...site, pages: updatedPages };
+
+    // Debug: verify image nodes in JSON before saving
+    try {
+      const pagesJson = JSON.stringify(updatedPages);
+      const parsed = JSON.parse(pagesJson);
+      parsed.forEach((p: any) => {
+        const findImages = (node: any): any[] => {
+          if (!node) return [];
+          const results = node.type === 'image' ? [node] : [];
+          const childResults = (node.children || []).flatMap(findImages);
+          return [...results, ...childResults];
+        };
+        const images = findImages(p.rootNode);
+        console.log(`[SAVE] Page "${p.name}" has ${images.length} images:`);
+        images.forEach(img => {
+          console.log('  - src:', img.src || 'MISSING');
+          console.log('  - props.src:', img.props?.src || 'MISSING');
+        });
+      });
+    } catch (e) {
+      console.warn('[SAVE] Debug verification failed:', e);
+    }
 
     try {
       const saved = await contentService.saveSiteData(updatedSite);

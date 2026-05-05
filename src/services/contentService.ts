@@ -57,7 +57,7 @@ export const contentService = {
     const localKey = 'vibe_site_' + userId;
     const localData = localStorage.getItem(localKey);
     
-    const { data, errors } = await gql(`
+    const { data } = await gql(`
       query GetWebsiteByUserId($filter: Website_bool_exp) {
         Website(where: $filter, limit: 1) {
           ItemId UserId Username IsPublished Pages Title Description HomePageId LastUpdatedDate
@@ -173,7 +173,7 @@ export const contentService = {
 
     // 2. Remote Save
     if (site.itemId) {
-      const { data, errors } = await gql(`
+      const { errors } = await gql(`
         mutation UpdateWebsite($ItemId: String!, $changes: Website_set_input!) {
           update_Website(where: { ItemId: { _eq: $ItemId } }, _set: $changes) {
             returning { ItemId }
@@ -197,7 +197,7 @@ export const contentService = {
         console.log('[SAVE] Remote update success');
       }
     } else {
-      const { data, errors } = await gql(`
+      const { data } = await gql(`
         mutation InsertWebsite($object: Website_insert_input!) {
           insert_Website_one(object: $object) { ItemId UserId }
         }

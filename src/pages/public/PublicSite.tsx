@@ -47,38 +47,34 @@ function RenderNode({ node }: { node: VibeNode }) {
   const renderContent = () => {
     switch (type) {
       case 'image': {
-        const imgSrc = src || props?.src || node.data?.src || content || '';
+        // Try both src and props.src - same as vibe.ts structure
+        const imgSrc = src || props?.src || '';
+        
+        console.log('[PUBLIC-RENDER] Image node:', node.id);
+        console.log('[PUBLIC-RENDER] src:', src);
+        console.log('[PUBLIC-RENDER] props.src:', props?.src);
+        console.log('[PUBLIC-RENDER] Using:', imgSrc);
         
         if (!imgSrc || imgSrc.startsWith('blob:')) {
-          return (
-            <div style={{
-              width: style.width || '100%',
-              height: style.height || '200px',
-              backgroundColor: '#f0f0f0',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#999',
-              fontSize: '14px'
-            }}>
-              Image not available
-            </div>
-          );
+          return null; // Don't render broken images
         }
+        
         return (
           <img
+            key={node.id}
             src={imgSrc}
             alt={node.alt || props?.alt || ''}
             style={{
-              width: '100%',
-              height: 'auto',
+              width: props?.width || '100%',
+              height: props?.height || 'auto',
+              objectFit: props?.objectFit || 'cover',
               display: 'block',
-              objectFit: 'cover',
-              ...style
+              maxWidth: '100%',
+              ...style,
+              src: undefined // Remove src from style if it exists
             }}
-            onError={e => {
-              console.error('[RENDER] Image failed:', imgSrc);
-              (e.target as HTMLImageElement).style.display = 'none';
+            onError={() => {
+              console.error('[PUBLIC-RENDER] Load failed:', imgSrc);
             }}
           />
         );
