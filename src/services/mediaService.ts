@@ -29,16 +29,18 @@ export async function uploadImage(file: File): Promise<string> {
   }
 
   try {
+    console.log('[UPLOAD] Starting upload for:', file.name);
     // Step 1: Get presigned URL
     const body = {
       name: file.name,
       projectKey: KEY,
-      moduleName: 8,
+      moduleName: 'common', // Changed from 8 to 'common'
       accessModifier: 'Public',
       contentType: file.type,
       fileSize: file.size
     };
     
+    console.log('[UPLOAD] Requesting presigned URL with body:', body);
     const r1 = await fetch(
       `${BASE}/uds/v1/Files/GetPreSignedUrlForUpload`,
       {
@@ -52,7 +54,14 @@ export async function uploadImage(file: File): Promise<string> {
       }
     );
 
+    if (!r1.ok) {
+      const errText = await r1.text();
+      console.error('[UPLOAD] Presigned URL request failed:', r1.status, errText);
+      return '';
+    }
+
     const d1 = await r1.json();
+    console.log('[UPLOAD] Presigned URL response:', d1);
 
     // Find upload URL in response
     const uploadUrl =
@@ -61,11 +70,12 @@ export async function uploadImage(file: File): Promise<string> {
       d1?.url || d1?.presignedUrl;
 
     if (!uploadUrl) {
-      console.error('[UPLOAD] No upload URL in response:', d1);
+      console.error('[UPLOAD] No upload URL found in response data');
       return '';
     }
 
     // Step 2: Upload to Azure Blob
+    console.log('[UPLOAD] Uploading to Azure Blob...');
     const r2 = await fetch(uploadUrl, {
       method: 'PUT',
       headers: {
@@ -76,12 +86,13 @@ export async function uploadImage(file: File): Promise<string> {
     });
 
     if (!r2.ok) {
-      console.error('[UPLOAD] Azure upload failed:', r2.status);
+      console.error('[UPLOAD] Azure upload failed status:', r2.status);
       return '';
     }
 
     // Step 3: Return permanent URL
     const permanentUrl = uploadUrl.split('?')[0];
+    console.log('[UPLOAD] Success! Permanent URL:', permanentUrl);
 
     if (permanentUrl.startsWith('blob:')) {
       throw new Error('Got blob URL - UDS upload failed');
@@ -89,11 +100,10 @@ export async function uploadImage(file: File): Promise<string> {
     if (!permanentUrl.startsWith('https://')) {
       throw new Error('Invalid URL: ' + permanentUrl);
     }
-    console.log('[UDS] Permanent URL confirmed:', permanentUrl);
     return permanentUrl;
 
   } catch (err: any) {
-    console.error('[UPLOAD] Error:', err.message);
+    console.error('[UPLOAD] Unexpected error:', err.message);
     return '';
   }
 }
