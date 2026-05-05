@@ -1,3 +1,5 @@
+import { clients } from '@/lib/https';
+
 const BASE = import.meta.env.VITE_API_BASE_URL;
 const SLUG = import.meta.env.VITE_PROJECT_SLUG;
 const KEY = import.meta.env.VITE_X_BLOCKS_KEY;
@@ -22,25 +24,17 @@ export const getAuthToken = (): string => {
     localStorage.getItem('blocks_token') || '';
 };
 
-const authHeaders = () => ({
-  'Content-Type': 'application/json',
-  'x-blocks-key': KEY,
-  'Authorization': `Bearer ${getAuthToken()}`
-});
-
-const publicHeaders = () => ({
-  'Content-Type': 'application/json',
-  'x-blocks-key': KEY
-});
-
 async function gql(query: string, variables: any, pub = false) {
   try {
-    const res = await fetch(GQL, {
+    const json = await clients.request<any>(GQL, {
       method: 'POST',
-      headers: pub ? publicHeaders() : authHeaders(),
-      body: JSON.stringify({ query, variables })
+      body: JSON.stringify({ query, variables }),
+      headers: {
+        'Authorization': pub ? '' : `Bearer ${getAuthToken()}`
+      },
+      credentials: 'omit'
     });
-    const json = await res.json();
+
     if (json.errors) {
       console.error('[DGS GraphQL Errors]', JSON.stringify(json.errors, null, 2));
       return { errors: json.errors };

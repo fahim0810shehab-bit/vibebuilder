@@ -67,6 +67,7 @@ interface RequestOptions {
   method: 'GET' | 'POST' | 'PUT' | 'DELETE';
   headers?: HeadersInit;
   body?: BodyInit;
+  credentials?: RequestCredentials;
 }
 
 export class HttpError extends Error {
@@ -103,7 +104,8 @@ export const clients: Https = {
     return this.request<T>(url, { method: 'DELETE', headers });
   },
 
-  async request<T>(url: string, { method, headers = {}, body }: RequestOptions): Promise<T> {
+  async request<T>(url: string, options: RequestOptions): Promise<T> {
+    const { method, headers = {}, body, credentials } = options;
     const fullUrl = url.startsWith('http') ? url : `${BASE_URL}/${url.replace(/^\//, '')}`;
 
     const requestHeaders = this.createHeaders(headers);
@@ -114,7 +116,9 @@ export const clients: Https = {
       referrerPolicy: 'no-referrer',
     };
 
-    if (!localHostChecker) {
+    if (credentials) {
+      config.credentials = credentials;
+    } else if (!localHostChecker) {
       config.credentials = 'include';
     }
 
