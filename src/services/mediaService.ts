@@ -1,66 +1,36 @@
+import { clients } from '@/lib/https';
+import { useAuthStore } from '@/state/store/auth';
+
 const BASE = import.meta.env.VITE_API_BASE_URL;
 const KEY = import.meta.env.VITE_X_BLOCKS_KEY;
 
-// Use the EXACT token key found from debug above
-const getToken = (): string => {
-  const possibleKeys = [
-    'access_token',
-    'token',
-    'selise_access_token',
-    'blocks_access_token',
-    'id_token',
-    'selise_token',
-    'auth_token'
-  ];
-  for (const key of possibleKeys) {
-    const val = localStorage.getItem(key) || 
-                sessionStorage.getItem(key);
-    if (val && val.startsWith('eyJ')) return val;
-  }
-  return '';
-};
-
 export async function uploadImage(file: File): Promise<string> {
-  const token = getToken();
+  const { accessToken } = useAuthStore.getState();
   
-  if (!token) {
+  if (!accessToken) {
     console.error('[UPLOAD] No auth token - cannot upload to Selise');
     return '';
   }
 
   try {
     console.log('[UPLOAD] Starting upload for:', file.name);
-    // Step 1: Get presigned URL
+    
+    // Step 1: Get presigned URL using the standard clients utility
     const body = {
       name: file.name,
       projectKey: KEY,
-      moduleName: 'common', // Changed from 8 to 'common'
+      moduleName: 'common',
       accessModifier: 'Public',
       contentType: file.type,
       fileSize: file.size
     };
     
     console.log('[UPLOAD] Requesting presigned URL with body:', body);
-    const r1 = await fetch(
+    const d1 = await clients.post<any>(
       `${BASE}/uds/v1/Files/GetPreSignedUrlForUpload`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-blocks-key': KEY,
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(body)
-      }
+      JSON.stringify(body)
     );
 
-    if (!r1.ok) {
-      const errText = await r1.text();
-      console.error('[UPLOAD] Presigned URL request failed:', r1.status, errText);
-      return '';
-    }
-
-    const d1 = await r1.json();
     console.log('[UPLOAD] Presigned URL response:', d1);
 
     // Find upload URL in response
@@ -74,7 +44,7 @@ export async function uploadImage(file: File): Promise<string> {
       return '';
     }
 
-    // Step 2: Upload to Azure Blob
+    // Step 2: Upload to Azure Blob (Direct fetch as it's an external URL)
     console.log('[UPLOAD] Uploading to Azure Blob...');
     const r2 = await fetch(uploadUrl, {
       method: 'PUT',

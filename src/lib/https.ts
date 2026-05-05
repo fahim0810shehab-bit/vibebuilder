@@ -167,7 +167,7 @@ export const clients: Https = {
   },
 
   createHeaders(headers: any): Headers {
-    const authToken = localHostChecker ? useAuthStore.getState().accessToken : null;
+    const authToken = useAuthStore.getState().accessToken;
 
     const baseHeaders = {
       'Content-Type': 'application/json',

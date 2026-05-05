@@ -26,13 +26,9 @@ export const getAuthToken = (): string => {
 
 async function gql(query: string, variables: any, pub = false) {
   try {
-    const json = await clients.request<any>(GQL, {
-      method: 'POST',
-      body: JSON.stringify({ query, variables }),
-      headers: {
-        'Authorization': pub ? '' : `Bearer ${getAuthToken()}`
-      },
-      credentials: 'omit'
+    const json = await clients.post<any>(GQL, JSON.stringify({ query, variables }), {
+      // DGS often requires explicit headers even if IDP uses cookies
+      'Authorization': pub ? '' : `Bearer ${getAuthToken()}`
     });
 
     if (json.errors) {
