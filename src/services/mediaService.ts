@@ -1,141 +1,91 @@
 const BASE = import.meta.env.VITE_API_BASE_URL;
 const KEY = import.meta.env.VITE_X_BLOCKS_KEY;
 
-/**
- * Gets the auth token by checking all possible storage locations.
- * Primary: Zustand persist store ('auth-storage') which is always populated.
- * Fallback: Direct localStorage keys set by editor/dashboard pages.
- */
+// Use the EXACT token key found from debug above
 const getToken = (): string => {
-  // 1. Primary: Zustand persist store (always the most reliable)
-  try {
-    const raw = localStorage.getItem('auth-storage');
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      const token = parsed?.state?.accessToken;
-      if (token && token.length > 20) {
-        return token;
-      }
-    }
-  } catch {
-    // ignore parse errors
-  }
-
-  // 2. Fallbacks: direct localStorage keys
-  const fallbackKeys = [
+  const possibleKeys = [
     'access_token',
     'token',
     'selise_access_token',
-    'selise_token',
     'blocks_access_token',
     'id_token',
+    'selise_token',
+    'auth_token'
   ];
-
-  for (const key of fallbackKeys) {
-    const val = localStorage.getItem(key) || sessionStorage.getItem(key) || '';
-    if (val && val.length > 20) {
-      return val;
-    }
+  for (const key of possibleKeys) {
+    const val = localStorage.getItem(key) || 
+                sessionStorage.getItem(key);
+    if (val && val.startsWith('eyJ')) return val;
   }
-
-  console.error('[MEDIA] No auth token found in any storage key');
   return '';
 };
 
-export const mediaService = {
-  async uploadImage(file: File): Promise<string> {
-    const token = getToken();
+export async function uploadImage(file: File): Promise<string> {
+  const token = getToken();
+  
+  if (!token) {
+    console.error('[UPLOAD] No auth token - cannot upload to Selise');
+    return '';
+  }
 
-    console.log('[MEDIA-1] File:', file.name, file.type, file.size);
-    console.log('[MEDIA-2] Token exists:', !!token, '| length:', token.length);
-    console.log('[MEDIA-3] BASE:', BASE);
-    console.log('[MEDIA-4] KEY:', KEY?.substring(0, 10) + '...');
-
-    try {
-      // ── STEP A: Get presigned URL from Selise UDS ──────────────────────────
-      const requestBody = {
-        name: file.name,
-        projectKey: KEY,
-        moduleName: 8,            // 8 = Content/Website module in Selise UDS
-        accessModifier: 'Public',
-        contentType: file.type,
-        fileSize: file.size,
-        description: 'VibeBuilder image upload',
-      };
-
-      console.log('[MEDIA-5] Presign request:', JSON.stringify(requestBody));
-
-      const presignRes = await fetch(
-        `${BASE}/uds/v1/Files/GetPreSignedUrlForUpload`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-blocks-key': KEY,
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify(requestBody),
-        }
-      );
-
-      console.log('[MEDIA-6] Presign HTTP status:', presignRes.status);
-
-      if (!presignRes.ok) {
-        const errText = await presignRes.text();
-        console.error('[MEDIA-7] Presign failed:', presignRes.status, errText);
-        return URL.createObjectURL(file);
-      }
-
-      const presignData = await presignRes.json();
-      console.log('[MEDIA-8] Presign response:', JSON.stringify(presignData));
-
-      // Handle ALL possible response formats Selise has ever used
-      const uploadUrl =
-        presignData?.uploadUrl ||
-        presignData?.UploadUrl ||
-        presignData?.data?.uploadUrl ||
-        presignData?.result?.uploadUrl ||
-        presignData?.url ||
-        presignData?.presignedUrl ||
-        presignData?.signedUrl ||
-        presignData?.fileUrl;
-
-      console.log('[MEDIA-9] Upload URL found:', uploadUrl ? uploadUrl.substring(0, 80) + '...' : 'NONE');
-
-      if (!uploadUrl) {
-        console.error('[MEDIA-10] No upload URL in response:', presignData);
-        return URL.createObjectURL(file);
-      }
-
-      // ── STEP B: Upload binary to Azure Blob Storage ─────────────────────────
-      console.log('[MEDIA-11] Uploading to Azure...');
-
-      const uploadRes = await fetch(uploadUrl, {
-        method: 'PUT',
+  try {
+    // Step 1: Get presigned URL
+    const body = {
+      name: file.name,
+      projectKey: KEY,
+      moduleName: 8,
+      accessModifier: 'Public',
+      contentType: file.type,
+      fileSize: file.size
+    };
+    
+    const r1 = await fetch(
+      `${BASE}/uds/v1/Files/GetPreSignedUrlForUpload`,
+      {
+        method: 'POST',
         headers: {
-          'Content-Type': file.type,
-          'x-ms-blob-type': 'BlockBlob',
-          'Content-Length': String(file.size),
+          'Content-Type': 'application/json',
+          'x-blocks-key': KEY,
+          'Authorization': `Bearer ${token}`
         },
-        body: file,
-      });
-
-      console.log('[MEDIA-12] Azure upload status:', uploadRes.status);
-
-      if (!uploadRes.ok) {
-        const errText = await uploadRes.text();
-        console.error('[MEDIA-13] Azure upload failed:', uploadRes.status, errText);
-        return URL.createObjectURL(file);
+        body: JSON.stringify(body)
       }
+    );
 
-      // ── STEP C: Return permanent CDN URL (strip SAS query string) ───────────
-      const permanentUrl = uploadUrl.split('?')[0];
-      console.log('[MEDIA-14] SUCCESS — Permanent URL:', permanentUrl);
-      return permanentUrl;
+    const d1 = await r1.json();
 
-    } catch (err: any) {
-      console.error('[MEDIA-ERROR]', err?.message, err);
-      return URL.createObjectURL(file);
+    // Find upload URL in response
+    const uploadUrl =
+      d1?.uploadUrl || d1?.UploadUrl ||
+      d1?.data?.uploadUrl || d1?.result?.uploadUrl ||
+      d1?.url || d1?.presignedUrl;
+
+    if (!uploadUrl) {
+      console.error('[UPLOAD] No upload URL in response:', d1);
+      return '';
     }
-  },
-};
+
+    // Step 2: Upload to Azure Blob
+    const r2 = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': file.type,
+        'x-ms-blob-type': 'BlockBlob'
+      },
+      body: file
+    });
+
+    if (!r2.ok) {
+      console.error('[UPLOAD] Azure upload failed:', r2.status);
+      return '';
+    }
+
+    // Step 3: Return permanent URL
+    const permanentUrl = uploadUrl.split('?')[0];
+    return permanentUrl;
+
+  } catch (err: any) {
+    console.error('[UPLOAD] Error:', err.message);
+    return '';
+  }
+}

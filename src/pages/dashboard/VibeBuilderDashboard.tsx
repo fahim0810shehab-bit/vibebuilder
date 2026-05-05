@@ -128,9 +128,45 @@ export default function VibeBuilderDashboard() {
   };
 
   const togglePublish = async () => {
-    if (!site) return;
-    const updated = { ...site, is_published: !site.is_published };
-    await saveSite(updated);
+    try {
+      setSaving(true);
+
+      // Load complete latest data from localStorage
+      const localKey = 'vibe_site_' + userId;
+      const raw = localStorage.getItem(localKey);
+
+      if (!raw) {
+        alert('No site data found. Please open the editor and save first.');
+        return;
+      }
+
+      const latestData = JSON.parse(raw);
+
+      // Verify pages are intact
+      if (!latestData.pages || latestData.pages.length === 0) {
+        alert('Site has no pages, cannot publish empty site.');
+        return;
+      }
+
+      // Only change is_published - keep everything else exactly as it is in local draft
+      const updated = {
+        ...latestData,
+        is_published: !latestData.is_published
+      };
+
+      // Save to localStorage immediately
+      localStorage.setItem(localKey, JSON.stringify(updated));
+      localStorage.setItem('vibe_site_user_' + updated.username, JSON.stringify(updated));
+
+      // Save to Selise with complete data
+      await saveSite(updated);
+
+    } catch (err: any) {
+      console.error('[PUBLISH] Failed:', err);
+      setError('Publish failed: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const addPage = async () => {

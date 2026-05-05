@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '@/state/store/auth';
 import { contentService } from '@/services/contentService';
-import { mediaService } from '@/services/mediaService';
+import { uploadImage } from '@/services/mediaService';
 import { SiteData, VibeNode, VibePage } from '@/types/vibe';
 import { v4 as uuidv4 } from 'uuid';
 import { decodeJWT } from '@/lib/utils/decode-jwt-utils';
@@ -554,24 +554,10 @@ export default function VibeBuilderEditor() {
   const userId = user?.itemId ?? user?.email ?? jwtPayload?.sub ?? jwtPayload?.itemId ?? jwtPayload?.userId ?? '';
   const username = user?.userName ?? user?.email?.split('@')[0] ?? jwtPayload?.preferred_username ?? 'user';
 
-  // Store token in localStorage so mediaService can find it
+  // Store token
   useEffect(() => {
     if (accessToken) localStorage.setItem('access_token', accessToken);
   }, [accessToken]);
-
-  // Debug: log all localStorage keys on mount to identify token key names
-  useEffect(() => {
-    console.log('[AUTH-DEBUG] localStorage keys:');
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i)!;
-      const v = localStorage.getItem(k) || '';
-      if (v.length > 200) {
-        console.log(`  ${k}: [JWT length=${v.length} starts=${v.substring(0, 15)}]`);
-      } else {
-        console.log(`  ${k}: ${v.substring(0, 100)}`);
-      }
-    }
-  }, []);
 
   // Load site & page
   useEffect(() => {
@@ -580,15 +566,16 @@ export default function VibeBuilderEditor() {
     const loadSite = async () => {
       setLoading(true);
       setError(null);
-      try {
-        const data = await Promise.race([
-          contentService.getByUserId(userId),
-          new Promise<null>((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
-        ]);
-
-        if (data) {
+      
+      const localKey = 'vibe_site_' + userId;
+      
+      // 1. Instant load from localStorage
+      const local = localStorage.getItem(localKey);
+      if (local) {
+        try {
+          const data = JSON.parse(local);
           setSite(data);
-          const pg = data.pages.find((p: any) => p.id === pageId) ?? data.pages[0];
+          const pg = data.pages?.find((p: any) => p.id === pageId) ?? data.pages?.[0];
           if (pg) {
             setPage(pg);
             const initial = pg.rootNode?.children ?? [];
@@ -596,26 +583,39 @@ export default function VibeBuilderEditor() {
             setHistory([initial]);
             setHistIdx(0);
           }
+          setLoading(false); // UI is instantly ready
+        } catch (e) {
+          console.warn('[EDITOR] Failed to parse local site data:', e);
         }
-      } catch (err) {
-        console.error('Failed to load site:', err);
-        const local = localStorage.getItem('vibe_site_' + userId) || localStorage.getItem('vibe_' + userId);
-        if (local) {
-          try {
-            const data = JSON.parse(local);
-            setSite(data);
-            const pg = data.pages?.find((p: any) => p.id === pageId) ?? data.pages?.[0];
-            if (pg) {
-              setPage(pg);
+      }
+
+      // 2. Background sync with Selise
+      try {
+        const data = await Promise.race([
+          contentService.getSiteByUserId(userId), // Assuming getSiteByUserId is the actual name in contentService
+          new Promise<null>((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+        ]);
+
+        if (data) {
+          setSite(data);
+          localStorage.setItem(localKey, JSON.stringify(data));
+          
+          const pg = data.pages.find((p: any) => p.id === pageId) ?? data.pages[0];
+          if (pg) {
+            setPage(pg);
+            // Only update nodes if we didn't already load them locally, or if we want to force remote state.
+            // Usually, if we loaded locally, we don't want to clobber unsaved changes.
+            if (!local) {
               const initial = pg.rootNode?.children ?? [];
               setNodes(initial);
               setHistory([initial]);
               setHistIdx(0);
             }
-          } catch (e) {
-            setError('Failed to load site from backup.');
           }
-        } else {
+        }
+      } catch (err) {
+        console.warn('[EDITOR] Background sync failed:', err);
+        if (!local) {
           setError('Network timeout. Please check your connection.');
         }
       } finally {
@@ -675,6 +675,20 @@ export default function VibeBuilderEditor() {
     debugStorage();
   }, []);
 
+  // Temporarily added auth debug for token hunt
+  useEffect(() => {
+    console.log('[AUTH DEBUG] All localStorage:');
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i)!;
+      const v = localStorage.getItem(k) || '';
+      if (v.length > 200) {
+        console.log(k, ': [JWT token - length:', v.length, ']');
+      } else {
+        console.log(k, ':', v.substring(0, 100));
+      }
+    }
+  }, []);
+
   // Add node
   const addNode = (type: VibeNode['type']) => {
     const node = createNode(type);
@@ -713,7 +727,7 @@ export default function VibeBuilderEditor() {
     if (!selectedId || !site || !page) return;
     setStatus('Uploading...');
     try {
-      const url = await mediaService.uploadImage(file);
+      const url = await uploadImage(file);
 
       // Build the updated nodes with the fresh URL in both src and props.src
       const nodeId = selectedId;

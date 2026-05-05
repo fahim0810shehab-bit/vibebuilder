@@ -98,32 +98,69 @@ export const contentService = {
   },
 
   async getSiteByUsername(username: string, isPublic = true): Promise<any | null> {
-    const { data } = await gql(`
-      query GetWebsiteByUsername($filter: Website_bool_exp) {
-        Website(where: $filter, limit: 1) {
-          ItemId UserId Username IsPublished Pages Title Description HomePageId LastUpdatedDate
-        }
-      }
-    `, { filter: { Username: { _eq: username } } }, isPublic);
+    console.log('[PUBLIC] Loading site for:', username);
 
-    const record = data?.Website?.[0];
-    if (!record) {
-      const local = localStorage.getItem('vibe_site_user_' + username);
-      return local ? JSON.parse(local) : null;
+    // Try Selise Data Gateway first
+    try {
+      const { data } = await gql(`
+        query GetPublicSite($filter: Website_bool_exp) {
+          Website(where: $filter, limit: 1) {
+            ItemId
+            UserId
+            Username
+            IsPublished
+            Pages
+            Title
+            Description
+            HomePageId
+          }
+        }
+      `, { 
+        filter: { 
+          Username: { _eq: username },
+          IsPublished: { _eq: true }
+        }
+      }, isPublic);
+
+      const record = data?.Website?.[0];
+      
+      if (record) {
+        const site = {
+          itemId: record.ItemId,
+          user_id: record.UserId,
+          username: record.Username,
+          is_published: record.IsPublished,
+          title: record.Title || '',
+          homePageId: record.HomePageId || '',
+          pages: (() => {
+            try {
+              const parsed = typeof record.Pages === 'string'
+                ? JSON.parse(record.Pages)
+                : record.Pages;
+              return parsed || [];
+            } catch (e) {
+              console.error('[PUBLIC] Pages parse error:', e);
+              return [];
+            }
+          })()
+        };
+        return site;
+      }
+    } catch (err) {
+      console.warn('[PUBLIC] Selise failed:', err);
     }
 
-    return {
-      itemId: record.ItemId,
-      user_id: record.UserId,
-      username: record.Username,
-      is_published: record.IsPublished,
-      title: record.Title || '',
-      description: record.Description || '',
-      pages: (() => {
-        try { return JSON.parse(record.Pages || '[]'); }
-        catch { return []; }
-      })()
-    };
+    // Fallback to localStorage (helps during development)
+    const local = localStorage.getItem('vibe_site_user_' + username);
+    if (local) {
+      const parsed = JSON.parse(local);
+      if (!parsed.is_published) {
+        return null;
+      }
+      return parsed;
+    }
+
+    return null;
   },
 
   async saveSiteData(site: any): Promise<any> {

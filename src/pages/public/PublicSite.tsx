@@ -46,6 +46,99 @@ function RenderNode({ node }: { node: VibeNode }) {
 
   const renderContent = () => {
     switch (type) {
+      case 'image': {
+        const imgSrc = src || props?.src || node.data?.src || content || '';
+        
+        if (!imgSrc || imgSrc.startsWith('blob:')) {
+          return (
+            <div style={{
+              width: style.width || '100%',
+              height: style.height || '200px',
+              backgroundColor: '#f0f0f0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#999',
+              fontSize: '14px'
+            }}>
+              Image not available
+            </div>
+          );
+        }
+        return (
+          <img
+            src={imgSrc}
+            alt={node.alt || props?.alt || ''}
+            style={{
+              width: '100%',
+              height: 'auto',
+              display: 'block',
+              objectFit: 'cover',
+              ...style
+            }}
+            onError={e => {
+              console.error('[RENDER] Image failed:', imgSrc);
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
+        );
+      }
+
+      case 'text':
+      case 'heading':
+      case 'paragraph':
+        return (
+          <div
+            style={style}
+            dangerouslySetInnerHTML={{ __html: content || '' }}
+          />
+        );
+
+      case 'button':
+        return (
+          <a
+            href={href || props?.href || '#'}
+            style={{
+              display: 'inline-block',
+              cursor: 'pointer',
+              textDecoration: 'none',
+              ...style
+            }}
+            target={props?.target || '_self'}
+          >
+            {content || 'Button'}
+          </a>
+        );
+
+      case 'video': {
+        const videoUrl = src || props?.src || content || '';
+        if (!videoUrl) return null;
+        const embedUrl = videoUrl.includes('youtube.com/watch')
+          ? videoUrl.replace('watch?v=', 'embed/')
+          : videoUrl.includes('youtu.be')
+          ? videoUrl.replace('youtu.be/', 'youtube.com/embed/')
+          : videoUrl;
+        return (
+          <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, ...style }}>
+            <iframe
+              src={embedUrl}
+              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+              frameBorder="0"
+              allowFullScreen
+            />
+          </div>
+        );
+      }
+
+      case 'divider':
+        return <hr style={{ border: 'none', borderTop: '1px solid #e0e0e0', ...style }} />;
+
+      case 'spacer':
+        return <div style={{ height: props?.height || '48px', ...style }} />;
+
+      case 'icon':
+        return <div style={style} className="flex items-center justify-center font-bold">[{content}]</div>;
+
       case 'section':
       case 'container':
       case 'hero':
@@ -63,72 +156,15 @@ function RenderNode({ node }: { node: VibeNode }) {
       case 'team':
       case 'stats':
       case 'faq':
+      case 'grid':
+      default:
         return (
           <div style={style}>
-            {children?.map((child) => (
+            {(children || []).map((child: any) => (
               <RenderNode key={child.id} node={child} />
             ))}
           </div>
         );
-      case 'heading':
-        return <h1 style={style}>{content}</h1>;
-      case 'paragraph':
-      case 'text':
-        return <p style={style}>{content}</p>;
-      case 'image': {
-        const imgSrc = src || props?.src || content || '';
-        if (!imgSrc || imgSrc.startsWith('blob:')) {
-          return (
-            <div style={{
-              ...style,
-              backgroundColor: '#e4e4e7',
-              minHeight: '200px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#71717a'
-            }}>
-              Image
-            </div>
-          );
-        }
-        return (
-          <img
-            src={imgSrc}
-            alt={node.alt || props?.alt || ''}
-            style={{ ...style, maxWidth: '100%', display: 'block' }}
-            onError={e => {
-              console.error('[PUBLIC] Image failed:', imgSrc);
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
-          />
-        );
-      }
-      case 'video':
-        return (
-          <iframe
-            src={src}
-            style={style}
-            title="Video"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            className="block border-0"
-          />
-        );
-      case 'button':
-        return (
-          <a href={href} style={style}>
-            {content}
-          </a>
-        );
-      case 'divider':
-        return <hr style={style} />;
-      case 'spacer':
-        return <div style={{ height: props.height || '48px' }} />;
-      case 'icon':
-        return <div style={style} className="flex items-center justify-center font-bold">[{content}]</div>;
-      default:
-        return null;
     }
   };
 
