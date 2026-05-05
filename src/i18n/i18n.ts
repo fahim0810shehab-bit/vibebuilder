@@ -8,7 +8,6 @@
 
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import { getUilmFile } from '@/components/core/language-selector/services/language.service';
 
 // declare custom type options so the return is always a string.
 declare module 'i18next' {
@@ -53,32 +52,33 @@ i18n.use(initReactI18next).init({
  * // Load translations for the dashboard module in French
  * await loadTranslations('fr-FR', 'dashboard');
  */
+// Mock translation dictionary for common keys
+const HARDCODED_ENGLISH: Record<string, string> = {
+  'LOG_IN': 'Log In',
+  'SIGN_UP': 'Sign Up',
+  'DONT_HAVE_ACCOUNT': "Don't have an account?",
+  'AUTH_OR': 'or',
+  'EMAIL': 'Email',
+  'PASSWORD': 'Password',
+  'FORGOT_PASSWORD': 'Forgot Password?',
+  'SUBMIT': 'Submit',
+  'SAVE': 'Save',
+  'PUBLISH': 'Publish',
+  'DASHBOARD': 'Dashboard',
+  'PAGES': 'Pages',
+  'SETTINGS': 'Settings',
+  'LOGOUT': 'Logout',
+  'CANCEL': 'Cancel',
+  'DELETE': 'Delete',
+  'EDIT': 'Edit',
+  'ADD': 'Add',
+  'SUCCESS': 'Success',
+  'ERROR': 'Error'
+};
+
 export const loadTranslations = async (language: string, moduleName: string): Promise<void> => {
-  try {
-    const translations = await getUilmFile({ language, moduleName });
-
-    if (!translations) {
-      return;
-    }
-
-    // Add the translations directly to i18n resources in the default namespace
-    // This allows direct access to keys without namespace prefix
-    i18n.addResourceBundle(
-      language,
-      'translation', // Default namespace for direct key access
-      translations, // The JSON object with keys and translations
-      true, // Deep merge
-      true // Overwrite
-    );
-
-    // Also add to the specific module namespace for organization
-    // This allows accessing keys with namespace prefix if needed
-    i18n.addResourceBundle(language, moduleName, translations, true, true);
-
-    // Translation loaded successfully
-  } catch (error) {
-    console.error(`Failed to load translations for module ${moduleName}:`, error);
-  }
+  console.log(`[i18n] Mocking load for ${language}/${moduleName}`);
+  return Promise.resolve();
 };
 
 /**
@@ -112,16 +112,15 @@ if (typeof window !== 'undefined') {
   window.__i18nKeyMode = false;
 }
 
-// Preserve original translator
-const originalT = i18n.t.bind(i18n);
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-(i18n as any).t = (key: string | string[], options?: Record<string, unknown>) => {
-  if (typeof window !== 'undefined' && window.__i18nKeyMode) {
-    if (Array.isArray(key)) return key[0];
-    return key;
-  }
-  return (originalT as any)(key, options);
+(i18n as any).t = (key: string | string[]) => {
+  const k = Array.isArray(key) ? key[0] : key;
+  
+  // Return hardcoded English if exists
+  if (HARDCODED_ENGLISH[k]) return HARDCODED_ENGLISH[k];
+  
+  // Fallback to humanizing the key (e.g. "WELCOME_MESSAGE" -> "Welcome Message")
+  return k.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
 };
 
 // Listen for messages coming from the browser extension

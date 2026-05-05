@@ -9,13 +9,8 @@ import {
   useRef,
 } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { loadTranslations } from './i18n';
 import { routeModuleMap } from './route-module-map';
-import {
-  useAvailableLanguages,
-  useAvailableModules,
-} from '@/components/core/language-selector/hooks/use-language';
 
 /**
  * Type definition for the Language Context.
@@ -67,17 +62,16 @@ export function LanguageProvider({
     }
   }, []);
 
-  const [isLoading, setIsLoading] = useState(true);
-  const { i18n } = useTranslation();
-  const { data: languages = [], isLoading: isLanguagesLoading } = useAvailableLanguages();
-  const { data: modules = [], isLoading: isModulesLoading } = useAvailableModules();
-  const isInitialized = useRef(false);
-  const hasCheckedDefaultLanguage = useRef(false);
-  const lastApiDefaultLanguage = useRef<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false); // Force false
+  const languages: any[] = [{ languageCode: 'en-US', isDefault: true }];
+  const modules: any[] = [{ moduleName: 'common' }];
+  const isInitialized = useRef(true); // Mark as initialized immediately
+  const hasCheckedDefaultLanguage = useRef(true);
+  const lastApiDefaultLanguage = useRef<string | null>('en-US');
 
   useEffect(() => {
-    setIsLoading(isLanguagesLoading || isModulesLoading);
-  }, [isLanguagesLoading, isModulesLoading]);
+    setIsLoading(false);
+  }, []);
 
   /**
    * Extracts the base route from a pathname.
